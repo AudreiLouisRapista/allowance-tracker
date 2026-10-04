@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('allowance_payouts', function (Blueprint $table) {
+        Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('plan_id')->constrained('allowance_plan')->restrictOnDelete();
+            $table->foreignId('request_id')->constrained('purchase_requests')->restrictOnDelete();
             $table->foreignId('student_id')->constrained('users')->restrictOnDelete();
-            $table->decimal('amount', 10, 2);
-            $table->date('cycle_date');
-            $table->dateTime('paid_at');
+            $table->string('message', 500);
+            $table->boolean('is_read')->default(false);
+            $table->dateTime('read_at')->nullable();
             $table->dateTime('created_at')->useCurrent();
-
-            $table->unique(['plan_id', 'cycle_date']);
         });
     }
 
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('allowance_payouts');
+        Schema::dropIfExists('notification');
     }
 };

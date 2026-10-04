@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('request_funding', function (Blueprint $table) {
+        Schema::create('request_funds', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('purchase_requests')->restrictOnDelete();
             $table->foreignId('parent_id')->constrained('users')->restrictOnDelete();
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request_funding');
+        Schema::dropIfExists('reqeust_funds');
     }
 };

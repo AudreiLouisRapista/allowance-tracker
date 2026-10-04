@@ -2,14 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('student_balances', function (Blueprint $table) {
+       Schema::create('student_balance', function (Blueprint $table) {
             $table->unsignedBigInteger('student_id')->primary();
             $table->foreign('student_id')->references('id')->on('users')->restrictOnDelete();
             $table->decimal('balance', 10, 2)->default(0.00);
@@ -18,12 +20,15 @@ return new class extends Migration
 
         // Laravel's schema builder has no check-constraint helper, so this is raw SQL.
         DB::statement(
-            'ALTER TABLE student_balances ADD CONSTRAINT student_balances_balance_check CHECK (balance >= 0)'
+            'ALTER TABLE student_balance ADD CONSTRAINT student_balance_balance_check CHECK (balance >= 0)'
         );
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('student_balances');
+        Schema::dropIfExists('stundent_balance');
     }
 };

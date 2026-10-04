@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('purchase_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('purchase_req_status_id')->constrained('purchase_req_status')->restrictOnDelete();
             $table->string('store_name', 150);
             $table->decimal('total_amount', 10, 2);
-            $table->string('status', 10);
             $table->decimal('lacking_amount', 10, 2)->default(0.00);
             $table->dateTime('requested_at');
             $table->dateTime('decided_at')->nullable();

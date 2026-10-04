@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('allowance_plan', function (Blueprint $table) {
+        Schema::create('allowance_payouts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('plan_id')->constrained('allowance_plans')->restrictOnDelete();
             $table->foreignId('student_id')->constrained('users')->restrictOnDelete();
             $table->decimal('amount', 10, 2);
-            $table->string('frequency', 10);
-            $table->date('start_date');
-            $table->date('next_payout_date');
-            $table->boolean('is_active');
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->date('cycle_date');
+            $table->dateTime('paid_at');
             $table->dateTime('created_at')->useCurrent();
-            $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
+
+            $table->unique(['plan_id', 'cycle_date']);
         });
     }
 
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('allowance_plan');
+        Schema::dropIfExists('allowance_payouts');
     }
 };

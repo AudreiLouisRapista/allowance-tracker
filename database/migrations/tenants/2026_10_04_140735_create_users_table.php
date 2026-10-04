@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('usr_status_id')->constrained('user_status')->restrictOnDelete();
+            $table->foreignId('usr_role_id')->constrained('user_role')->restrictOnDelete();
             $table->string('name', 150);
             $table->string('email', 255)->unique();
             $table->string('google_id', 64)->nullable()->unique();
-            $table->string('role', 10);
             $table->boolean('is_creator');
-            $table->string('status', 10);
             $table->dateTime('removed_at')->nullable();
             $table->dateTime('created_at')->useCurrent();
             $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();

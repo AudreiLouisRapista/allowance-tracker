@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('email_directory', function (Blueprint $table) {
+        Schema::create('user_role', function (Blueprint $table) {
             $table->id();
-            $table->string('email', 255)->unique();
-            $table->foreignId('family_id')
-                ->constrained('families')
-                ->restrictOnDelete();
-            $table->dateTime('created_at')->useCurrent();
+            $table->string('role', 20)->unique();
         });
+
+        DB::table('user_role')->insert([
+            ['role' => 'parent'],
+            ['role' => 'student'],
+        ]);
     }
 
     /**
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('email_directory');
+        Schema::dropIfExists('user_role');
     }
 };

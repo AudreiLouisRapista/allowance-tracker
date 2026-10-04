@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('request_reviews', function (Blueprint $table) {
+       Schema::create('parent_student', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('request_id')->constrained('purchase_requests')->restrictOnDelete();
             $table->foreignId('parent_id')->constrained('users')->restrictOnDelete();
-            $table->string('decision', 10);
-            $table->text('feedback')->nullable();
-            $table->dateTime('reviewed_at');
+            $table->foreignId('student_id')->constrained('users')->restrictOnDelete();
+            $table->dateTime('created_at')->useCurrent();
 
-            $table->unique(['request_id', 'parent_id']);
+            $table->unique(['parent_id', 'student_id']);
         });
     }
 
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request_reviews');
+        Schema::dropIfExists('parent_student');
     }
 };

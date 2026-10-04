@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('families', function (Blueprint $table) {
             $table->id();
+            $table->foreignid('fam_status_id')
+                    ->constrained('family_status')
+                    ->restrictOnDelete();
             $table->string('name', 150);
             $table->string('owner_email', 255);
             $table->string('database_name', 64)->unique();
             $table->string('time_zone', 64);
-            $table->string('status', 20)->default('active');
             $table->dateTime('created_at')->useCurrent();
             $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
