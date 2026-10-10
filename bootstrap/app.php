@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
 
         $middleware->alias([
-            'jwt.auth' => \App\Https\Middleware\AuthenticateJwt::class,
+            'jwt.auth' => \App\Http\Middleware\AuthenticateJwt::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
