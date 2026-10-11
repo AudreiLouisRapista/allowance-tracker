@@ -23,3 +23,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 });
+
+// Appearance only changes the theme, so it works with our JWT sign-in.
+Route::middleware('jwt.auth')->group(function () {
+    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::inertia('settings', '/settings/profile');
+
+    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+});

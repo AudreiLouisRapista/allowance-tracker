@@ -52,7 +52,7 @@ class GoogleAuthController extends Controller
         $directoryEntry = DB::table('users_directory')->where('email', $email)->first();
 
         if ($directoryEntry === null) {
-            return $this->backToLogin('This Google account is not registered yet.');
+            return $this->backToLogin($this->couldNotSignInMessage());
         }
 
         // Step 2: point the tenant connection at that family's database.
@@ -64,11 +64,11 @@ class GoogleAuthController extends Controller
             ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
             ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
             ->where('users.email', $email)
-            ->select('users.id', 'users.google_id', 'user_status.status as status', 'user_role.role as role')
+            ->select('users.id', 'users.name', 'users.google_id', 'user_status.status as status', 'user_role.role as role')
             ->first();
 
         if ($user === null) {
-            return $this->backToLogin('This Google account is not registered yet.');
+            return $this->backToLogin($this->couldNotSignInMessage());
         }
 
         if ($user->status !== 'active') {
@@ -76,7 +76,9 @@ class GoogleAuthController extends Controller
         }
 
         // Step 4: first sign-in saves the Google ID. Later sign-ins must match it.
-        if ($user->google_id === null) {
+        $isNewUser = $user->google_id === null;
+
+        if ($isNewUser) {
             DB::connection(TenantConnection::CONNECTION)
                 ->table('users')
                 ->where('id', $user->id)
@@ -100,12 +102,27 @@ class GoogleAuthController extends Controller
             sameSite: 'lax',
         );
 
-        // Temporary target for testing. The React step replaces it with the real dashboard.
-        return redirect('/auth/me')->withCookie($cookie);
+        // Step 6: go to the dashboard, carrying a one-time welcome message.
+        return redirect()
+            ->route('dashboard')
+            ->with('welcome', [
+                'type' => $isNewUser ? 'new' : 'returning',
+                'name' => $user->name,
+            ])
+            ->withCookie($cookie);
     }
 
     private function backToLogin(string $message): RedirectResponse
     {
         return redirect('/login')->with('google_error', $message);
+    }
+
+    /**
+     * Neutral wording for a Google account we do not know yet.
+     * Temporary: once new accounts can register themselves, this case goes away.
+     */
+    private function couldNotSignInMessage(): string
+    {
+        return 'We could not sign you in with this Google account.';
     }
 }
