@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react'; // Head sets the browser tab title; usePage reads the props Laravel shares with every page
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // shadcn Alert pieces, used to show a sign-in error
 import { Button } from '@/components/ui/button'; // shadcn Button, used for the "Sign in with Google" button
+import NewAccountDialog from '@/components/new-account-dialog'; // shadcn Dialog, used to confirm creating a new account when the Google account is not yet registered
 
 // Shape of the data this page reads from Laravel (shared by HandleInertiaRequests)
 type PageProps = {
@@ -62,8 +63,11 @@ export default function Login() {
                     </a>
                 </Button>
             </div>
+
+             <NewAccountDialog />
         </>
     );
+
 }
 
 // Title and description that the auth layout shows above the page content
