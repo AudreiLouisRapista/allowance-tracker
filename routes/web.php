@@ -2,10 +2,14 @@
 
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+Route::post('/auth/register', [RegistrationController::class, 'store']);
+Route::post('/auth/register/cancel', [RegistrationController::class, 'cancel']);
 
 // Our own logout address. The starter kit has its own /logout, which we leave alone.
 Route::post('/auth/logout', LogoutController::class);

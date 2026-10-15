@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 use Throwable;
 
 class GoogleAuthController extends Controller
@@ -52,7 +53,16 @@ class GoogleAuthController extends Controller
         $directoryEntry = DB::table('users_directory')->where('email', $email)->first();
 
         if ($directoryEntry === null) {
-            return $this->backToLogin($this->couldNotSignInMessage());
+            // New email: create nothing yet. Keep the verified Google details in the session and
+            // let the login page ask the person to confirm. (Session, not flash, so a refresh keeps it.)
+            session()->put('pending_registration', [
+                'email' => $email,                                              // Verified by Google.
+                'google_id' => $googleId,                                       // Saved on the new user later.
+                'name' => $googleUser->getName() ?: Str::before($email, '@'),   // Fall back to the part before @.
+                'expires_at' => now()->addMinutes(10)->timestamp,               // The confirmation is valid for 10 minutes.
+            ]);
+
+            return redirect('/login');
         }
 
         // Step 2: point the tenant connection at that family's database.
@@ -103,6 +113,8 @@ class GoogleAuthController extends Controller
         );
 
         // Step 6: go to the dashboard, carrying a one-time welcome message.
+        // The person signed in normally, so drop any unfinished "create account" request.
+        session()->forget('pending_registration');
         return redirect()
             ->route('dashboard')
             ->with('welcome', [

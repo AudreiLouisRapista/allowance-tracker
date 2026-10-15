@@ -45,6 +45,18 @@ class HandleInertiaRequests extends Middleware
                 'welcome' => fn () => $request->session()->get('welcome'),
                 'google_error' => fn () => $request->session()->get('google_error'),
             ],
+            // The email waiting for the "create account" confirmation, or null when there is none.
+            // Read from the session so the dialog is still there after a page refresh.
+            'pendingRegistration' => function () use ($request) {
+                $pending = $request->session()->get('pending_registration');
+
+                // Show the dialog only while the held details have not expired.
+                if ($pending !== null && $pending['expires_at'] > now()->timestamp) {
+                    return $pending['email'];
+                }
+
+                return null;
+            },
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
