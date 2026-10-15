@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\AuthenticateJwt::class,
+            'role' => \App\Http\Middleware\EnsureRole::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

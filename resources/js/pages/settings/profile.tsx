@@ -1,7 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -9,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
 import type { Auth } from '@/types';
-import { send } from '@/routes/verification';
 
 type PageProps = {
     auth: Auth;
@@ -17,10 +14,12 @@ type PageProps = {
 
 export default function Profile({
     mustVerifyEmail,
+    phonenumber,
     status,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    phonenumber: string | null; // Sent by ProfileController::edit. It is null when no phone is saved.
 }) {
     const { auth } = usePage<PageProps>().props;
 
@@ -34,7 +33,7 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your name and email address"
+                    description="Update your name and phone number"
                 />
 
                 <Form
@@ -66,49 +65,53 @@ export default function Profile({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="phonenumber">Phone number</Label>
 
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
-                                    name="email"
-                                    required
-                                    autoComplete="username"
-                                    placeholder="Email address"
-                                />
+                                <div className="flex">
+                                    {/* Fixed Philippine prefix. It is not saved, only the digits after it are. */}
+                                    <span className="inline-flex items-center rounded-l-md border border-r-0 px-3 text-sm text-muted-foreground">
+                                        +63
+                                    </span>
+
+                                    <Input
+                                        id="phonenumber"
+                                        name="phonenumber"
+                                        className="rounded-l-none"
+                                        defaultValue={phonenumber ?? ''} 
+                                        inputMode="numeric"         
+                                        maxLength={10}             
+                                        autoComplete="tel-national"
+                                        placeholder="9XXXXXXXXX"
+                                        // Remove anything that is not a digit as the person types.
+                                        onInput={(e) => {
+                                            e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '');
+                                        }}
+                                    />
+                                </div>
 
                                 <InputError
                                     className="mt-2"
-                                    message={errors.email}
+                                    message={errors.phonenumber}
                                 />
                             </div>
 
-                            {mustVerifyEmail &&
-                                auth.user.email_verified_at === null && (
-                                    <div>
-                                        <p className="-mt-4 text-sm text-muted-foreground">
-                                            Your email address is unverified.{' '}
-                                            <Link
-                                                href={send()}
-                                                as="button"
-                                                className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                                            >
-                                                Click here to re-send the
-                                                verification email.
-                                            </Link>
-                                        </p>
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Email address</Label>
 
-                                        {status ===
-                                            'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-green-600">
-                                                A new verification link has been
-                                                sent to your email address.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                {/* No name attribute, so the email is never sent. It cannot be changed. */}
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    className="mt-1 block w-full bg-muted"
+                                    defaultValue={auth.user.email}
+                                    readOnly
+                                />
+
+                                <p className="text-sm text-muted-foreground">
+                                    Your email comes from your Google account and cannot be changed.
+                                </p>
+                            </div>
+
 
                             <div className="flex items-center gap-4">
                                 <Button
@@ -123,7 +126,6 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
         </>
     );
 }

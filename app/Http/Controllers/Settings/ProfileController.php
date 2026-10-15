@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\ProfileDeleteRequest;
-use App\Http\Requests\Settings\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Services\TenantConnection;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,25 +17,40 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
-        ]);
+        $user = $request->attributes->get('auth_user');
+
+        $phoneNumber = DB::connection(TenantConnection::CONNECTION)->table('users')
+            ->where('id', $user->id)
+            ->value('phonenumber');
+        
+        return Inertia::render('settings/profile', ['phoneNumber' => $phoneNumber]);
     }
 
     /**
-     * Update the user's profile information.
+     * Save the signed-in user's name and phone number.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->attributes->get('auth_user');
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
+        // Check the input. Empty values arrive as null, which "nullable" allows for the phone.
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],        // The column holds at most 150 characters.
+            'phonenumber' => ['nullable', 'digits_between:1,10'], // Digits only, 1 to 10 of them.
+        ], [
+            'phonenumber.digits_between' => 'Enter 1 to 10 digits, numbers only. Do not include +63.',
+        ]);
 
-        $request->user()->save();
+        // Update only these two fields of this user's row. The email is never touched.
+        DB::connection(TenantConnection::CONNECTION)
+            ->table('users')
+            ->where('id', $user->id)
+            ->update([
+                'name' => $validated['name'],
+                'phonenumber' => $validated['phonenumber'] ?? null,
+            ]);
 
+        // Show the "Profile updated." message (same line the starter kit used).
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
         return to_route('profile.edit');
