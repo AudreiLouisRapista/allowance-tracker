@@ -2,7 +2,7 @@ import { Head, usePage } from '@inertiajs/react'; // Head sets the tab title; us
 import { useEffect, useState } from 'react'; // useState remembers if the Alert is visible; useEffect runs the 5-second timer
 import { Alert, AlertTitle } from '@/components/ui/alert'; // shadcn Alert pieces for the welcome message
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { dashboard } from '@/routes';
+import { dashboardPathForRole } from '@/lib/dashboard-path';
 
 // Shape of the welcome data sent by GoogleAuthController after a successful login
 type WelcomeFlash = {
@@ -86,7 +86,7 @@ Dashboard.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboardPathForRole('parent'),
         },
     ],
 };

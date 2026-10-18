@@ -18,7 +18,8 @@ class RegistrationController extends Controller
     public function store(
         Request $request,
         TenantRegistrationService $registrationService,
-        JwtService $jwtService): RedirectResponse {
+        JwtService $jwtService): RedirectResponse
+    {
         // 1. Read the Google details that the callback held in the session.
         $pending = $request->session()->get('pending_registration');
 
@@ -65,7 +66,7 @@ class RegistrationController extends Controller
 
         // 7. Go to the dashboard, with the "new account" welcome message.
         return redirect()
-            ->route('dashboard')
+            ->route('parent.dashboard')
             ->with('welcome', ['type' => 'new', 'name' => $pending['name']])
             ->withCookie($cookie);
     }

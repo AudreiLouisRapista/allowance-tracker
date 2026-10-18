@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'welcome' => fn () => $request->session()->get('welcome'),
                 'google_error' => fn () => $request->session()->get('google_error'),
+                'add_student_error' => fn () => $request->session()->get('add_student_error'),
             ],
             // The email waiting for the "create account" confirmation, or null when there is none.
             // Read from the session so the dialog is still there after a page refresh.

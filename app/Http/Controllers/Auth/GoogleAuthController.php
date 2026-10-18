@@ -8,98 +8,66 @@ use App\Services\TenantConnection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Throwable;
 
 class GoogleAuthController extends Controller
 {
-    /**
-     * Send the user to Google's sign-in page.
-     */
-    public function redirectToGoogle(): RedirectResponse
-    {
-        return Socialite::driver('google')->redirect();
-    }
-
-    /**
-     * Google sends the user back here after they approve (or cancel).
-     */
-    public function handleGoogleCallback(
+    public function loginWithEmail(
         Request $request,
         JwtService $jwtService,
         TenantConnection $tenantConnection
     ): RedirectResponse {
-        try {
-            $googleUser = Socialite::driver('google')->user();
-        } catch (Throwable $exception) {
-            // Cancelled consent, expired state, or a Google error. Log it and send the user back.
-            report($exception);
+        $request->session()->forget('google_auth_intent');
 
-            return $this->backToLogin('Google sign-in was cancelled or failed. Please try again.');
-        }
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+        $email = Str::lower(trim($validated['email']));
 
-        $email = $googleUser->getEmail();
-        $googleId = $googleUser->getId();
-
-        // Refuse only if Google explicitly says the email is not verified.
-        $emailIsVerified = $googleUser->user['email_verified'] ?? true;
-
-        if (empty($email) || $emailIsVerified === false) {
-            return $this->backToLogin('Your Google email could not be verified.');
-        }
-
-        // Step 1: find which family this email belongs to (master database).
-        $directoryEntry = DB::table('users_directory')->where('email', $email)->first();
+        $directoryEntry = DB::table('users_directory')
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
 
         if ($directoryEntry === null) {
-            // New email: create nothing yet. Keep the verified Google details in the session and
-            // let the login page ask the person to confirm. (Session, not flash, so a refresh keeps it.)
-            session()->put('pending_registration', [
-                'email' => $email,                                              // Verified by Google.
-                'google_id' => $googleId,                                       // Saved on the new user later.
-                'name' => $googleUser->getName() ?: Str::before($email, '@'),   // Fall back to the part before @.
-                'expires_at' => now()->addMinutes(10)->timestamp,               // The confirmation is valid for 10 minutes.
-            ]);
-
-            return redirect('/login');
+            return $this->backToLogin(
+                'No account was found for this email. Please check it or sign up.'
+            );
         }
 
-        // Step 2: point the tenant connection at that family's database.
         $tenantConnection->switchToFamily($directoryEntry->family_id);
 
-        // Step 3: find the user inside the family database.
         $user = DB::connection(TenantConnection::CONNECTION)
             ->table('users')
             ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
             ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
-            ->where('users.email', $email)
-            ->select('users.id', 'users.name', 'users.google_id', 'user_status.status as status', 'user_role.role as role')
+            ->whereRaw('LOWER(users.email) = ?', [$email])
+            ->select('users.id', 'users.name', 'user_status.status as status', 'user_role.role as role')
             ->first();
 
         if ($user === null) {
-            return $this->backToLogin($this->couldNotSignInMessage());
+            return $this->backToLogin('We could not find this user in the registered family.');
         }
 
         if ($user->status !== 'active') {
-            return $this->backToLogin('This account has been removed from the family.');
+            return $this->backToLogin('This account is not active.');
         }
 
-        // Step 4: first sign-in saves the Google ID. Later sign-ins must match it.
-        $isNewUser = $user->google_id === null;
+        $dashboardRoute = match ($user->role) {
+            'parent' => 'parent.dashboard',
+            'student' => 'student.dashboard',
+            default => null,
+        };
 
-        if ($isNewUser) {
-            DB::connection(TenantConnection::CONNECTION)
-                ->table('users')
-                ->where('id', $user->id)
-                ->update(['google_id' => $googleId]);
-        } elseif ($user->google_id !== $googleId) {
-            return $this->backToLogin('This Google account does not match the one registered for this user.');
+        if ($dashboardRoute === null) {
+            return $this->backToLogin('This account does not have dashboard access.');
         }
 
-        // Step 5: create the token and store it in an httpOnly cookie.
+        $request->session()->forget('pending_registration');
+
         $token = $jwtService->createToken($user->id, $directoryEntry->family_id, $user->role);
-
         $cookie = cookie(
             name: config('jwt.cookie_name'),
             value: $token,
@@ -112,29 +80,83 @@ class GoogleAuthController extends Controller
             sameSite: 'lax',
         );
 
-        // Step 6: go to the dashboard, carrying a one-time welcome message.
-        // The person signed in normally, so drop any unfinished "create account" request.
-        session()->forget('pending_registration');
         return redirect()
-            ->route('dashboard')
+            ->route($dashboardRoute)
             ->with('welcome', [
-                'type' => $isNewUser ? 'new' : 'returning',
+                'type' => 'returning',
                 'name' => $user->name,
             ])
             ->withCookie($cookie);
     }
 
-    private function backToLogin(string $message): RedirectResponse
+    public function redirectToGoogleSignup(Request $request): SymfonyRedirectResponse
     {
-        return redirect('/login')->with('google_error', $message);
+        session()->put('google_auth_intent', 'signup');
+        session()->put(
+            'google_signup_origin',
+            $request->query('source') === 'students' ? 'students' : 'login'
+        );
+
+        return Socialite::driver('google')->redirect();
     }
 
     /**
-     * Neutral wording for a Google account we do not know yet.
-     * Temporary: once new accounts can register themselves, this case goes away.
+     * Google sends the user back here after they approve (or cancel).
      */
-    private function couldNotSignInMessage(): string
+    public function handleGoogleCallback(Request $request): RedirectResponse
     {
-        return 'We could not sign you in with this Google account.';
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (Throwable $exception) {
+            // Cancelled consent, expired state, or a Google error. Log it and send the user back.
+            report($exception);
+            $request->session()->forget('google_auth_intent');
+
+            return $this->backToLogin('Google sign-in was cancelled or failed. Please try again.');
+        }
+
+        $intent = $request->session()->pull('google_auth_intent');
+        $signupOrigin = $request->session()->pull('google_signup_origin', 'login');
+        $email = $googleUser->getEmail();
+        $googleId = $googleUser->getId();
+
+        if ($intent !== 'signup') {
+            return $this->backToLogin('Please start sign-up from the registration button.');
+        }
+
+        // Refuse only if Google explicitly says the email is not verified.
+        $emailIsVerified = $googleUser->user['email_verified'] ?? true;
+
+        if (empty($email) || $emailIsVerified === false) {
+            return $this->backToLogin('Your Google email could not be verified.');
+        }
+
+        $directoryEntry = DB::table('users_directory')
+            ->whereRaw('LOWER(email) = ?', [Str::lower(trim($email))])
+            ->first();
+
+        if ($directoryEntry !== null) {
+            if ($signupOrigin === 'students') {
+                return redirect()
+                    ->route('students.index')
+                    ->with('add_student_error', 'This Google email is already registered. Use a different account to add a student.');
+            }
+
+            return $this->backToLogin('This Google email is already registered. Please sign in.');
+        }
+
+        session()->put('pending_registration', [
+            'email' => $email,
+            'google_id' => $googleId,
+            'name' => $googleUser->getName() ?: Str::before($email, '@'),
+            'expires_at' => now()->addMinutes(10)->timestamp,
+        ]);
+
+        return redirect('/login');
+    }
+
+    private function backToLogin(string $message): RedirectResponse
+    {
+        return redirect('/login')->with('google_error', $message);
     }
 }
