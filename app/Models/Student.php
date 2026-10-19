@@ -33,6 +33,8 @@ class Student extends Model
         'usr_status_id', 'usr_role_id', 'name', 'email', 'phonenumber', 'is_creator', 'removed_at',
     ];
 
+    protected $casts = ['removed_at' => 'datetime'];
+
     // Reusable filter: only users whose role is "student". Used as Student::onlyStudents().
     public function scopeOnlyStudents(Builder $query): Builder
     {
@@ -48,6 +50,15 @@ class Student extends Model
         return $query->whereIn(
             'usr_status_id',
             DB::connection(TenantConnection::CONNECTION)->table('user_status')->where('status', 'active')->select('id')
+        );
+    }
+
+    // Reusable filter: only users whose status is "active". Used as Student::active().
+    public function scopeRemoved(Builder $query): Builder
+    {
+        return $query->whereIn(
+            'usr_status_id',
+            DB::connection(TenantConnection::CONNECTION)->table('user_status')->where('status', 'removed')->select('id')
         );
     }
 }

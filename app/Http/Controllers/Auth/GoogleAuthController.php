@@ -110,29 +110,104 @@ class GoogleAuthController extends Controller
         } catch (Throwable $exception) {
             // Cancelled consent, expired state, or a Google error. Log it and send the user back.
             report($exception);
-            $request->session()->forget('google_auth_intent');
+
+            // Read the intent before clearing it, so a cancelled "add member"
+            // attempt returns to the family page instead of the login page.
+            $intent = $request->session()->get('google_auth_intent');
+
+            $request->session()->forget([
+                'google_auth_intent',
+                'google_signup_origin',
+                'google_member_family_id',
+                'google_member_role',
+                'google_member_parent_id',
+            ]);
+
+            if ($intent === 'add_member') {
+                return to_route('students.index')
+                    ->with('add_member_error', 'Google sign-in was cancelled or failed. Please try again.');
+            }
 
             return $this->backToLogin('Google sign-in was cancelled or failed. Please try again.');
         }
 
         $intent = $request->session()->pull('google_auth_intent');
         $signupOrigin = $request->session()->pull('google_signup_origin', 'login');
+
+        // Stored by FamilyMemberController before the Google redirect.
+        $memberFamilyId = $request->session()->pull('google_member_family_id');
+        $memberRole = $request->session()->pull('google_member_role');
+        $memberParentId = $request->session()->pull('google_member_parent_id');
+
         $email = $googleUser->getEmail();
         $googleId = $googleUser->getId();
-
-        if ($intent !== 'signup') {
-            return $this->backToLogin('Please start sign-up from the registration button.');
-        }
 
         // Refuse only if Google explicitly says the email is not verified.
         $emailIsVerified = $googleUser->user['email_verified'] ?? true;
 
         if (empty($email) || $emailIsVerified === false) {
-            return $this->backToLogin('Your Google email could not be verified.');
+            return $intent === 'add_member'
+                ? to_route('students.index')->with('add_member_error', 'Your Google email could not be verified.')
+                : $this->backToLogin('Your Google email could not be verified.');
+        }
+
+        // Normalize and validate what Google returned.
+        $email = Str::lower(trim($email));
+
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $intent === 'add_member'
+                ? to_route('students.index')->with('add_member_error', 'Your Google email is not valid.')
+                : $this->backToLogin('Your Google email is not valid.');
+        }
+
+        if (! is_string($googleId) || trim($googleId) === '') {
+            return $intent === 'add_member'
+                ? to_route('students.index')->with('add_member_error', 'The Google account could not be verified.')
+                : $this->backToLogin('The Google account could not be verified.');
+        }
+
+        $googleId = trim($googleId);
+        // Fall back to the part before @ when Google does not return a name.
+        $name = $googleUser->getName() ?: Str::before($email, '@');
+
+        if ($intent === 'add_member') {
+            // The family id and role must be valid before anything is stored.
+            if (
+                ! is_numeric($memberFamilyId)
+                || (int) $memberFamilyId < 1
+                || ! in_array($memberRole, ['parent', 'student'], true)
+            ) {
+                return to_route('students.index')
+                    ->with('add_member_error', 'Please start again from the family members page.');
+            }
+
+            // The email must not already be registered to any family.
+            if (DB::table('users_directory')->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+                return to_route('students.index')
+                    ->with('add_member_error', 'This Google email is already registered.');
+            }
+
+            // Hold the verified details only. Nothing is written until the parent
+            // confirms in the dialog (POST /family-members/register).
+            $request->session()->put('pending_member', [
+                'email' => $email,
+                'google_id' => $googleId,
+                'name' => $name,
+                'family_id' => (int) $memberFamilyId,
+                'role' => $memberRole,
+                'parent_id' => $memberParentId !== null ? (int) $memberParentId : null,
+                'expires_at' => now()->addMinutes(10)->timestamp,
+            ]);
+
+            return to_route('students.index');
+        }
+
+        if ($intent !== 'signup') {
+            return $this->backToLogin('Please start sign-up from the registration button.');
         }
 
         $directoryEntry = DB::table('users_directory')
-            ->whereRaw('LOWER(email) = ?', [Str::lower(trim($email))])
+            ->whereRaw('LOWER(email) = ?', [$email])
             ->first();
 
         if ($directoryEntry !== null) {
@@ -148,7 +223,7 @@ class GoogleAuthController extends Controller
         session()->put('pending_registration', [
             'email' => $email,
             'google_id' => $googleId,
-            'name' => $googleUser->getName() ?: Str::before($email, '@'),
+            'name' => $name,
             'expires_at' => now()->addMinutes(10)->timestamp,
         ]);
 

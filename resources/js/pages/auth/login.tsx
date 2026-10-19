@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useAutoDismiss } from '@/hooks/use-auto-dismiss';
 
 // Shape of the data this page reads from Laravel (shared by HandleInertiaRequests)
 type PageProps = {
@@ -16,6 +17,7 @@ type PageProps = {
 export default function Login() {
     // Read the one-time flash data. It exists only for the request right after a failed Google sign-in
     const { flash } = usePage<PageProps>().props;
+    const googleError = useAutoDismiss(flash.google_error);
 
     return (
         <>
@@ -24,13 +26,13 @@ export default function Login() {
 
             <div className="flex flex-col gap-6">
                 {/* Only render the Alert when the backend sent an error message */}
-                {flash.google_error && (
+                {googleError && (
                     <Alert variant="destructive">
                         {/* Short heading of the error */}
                         <AlertTitle>Sign-in failed</AlertTitle>
                         {/* The exact message from the backend, e.g. "This account has been removed from the family." */}
                         <AlertDescription>
-                            {flash.google_error}
+                            {googleError}
                         </AlertDescription>
                     </Alert>
                 )}

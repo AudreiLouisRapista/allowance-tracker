@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid } from 'lucide-react';
+import { Archive, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -18,21 +18,34 @@ import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [];
 
+// Parents manage the whole family.
+const parentNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Family members',
+        href: '/students',
+        icon: Users,
+    },
+];
+
+// Students only see their own area.
+const studentNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/student/dashboard',
+        icon: LayoutGrid,
+    },
+];
+
 export function AppSidebar() {
     const { auth } = usePage().props;
     const dashboardHref = dashboardPathForRole(auth.user.role);
-    const mainNavItems: NavItem[] = [
-        {
-            title: 'Dashboard',
-            href: dashboardHref,
-            icon: LayoutGrid,
-        },
-        {
-            title: 'Students',
-            href: '/students',
-            icon: LayoutGrid,
-        },
-    ];
+    const mainNavItems: NavItem[] =
+        auth.user.role === 'student' ? studentNavItems : parentNavItems;
 
     return (
         <Sidebar collapsible="icon" variant="inset">

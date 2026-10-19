@@ -18,7 +18,8 @@ class StudentController extends Controller
      */
     public function index(): Response
     {
-        $students = Student::onlyStudents()->active()
+        // List every active family member, so newly added parents also appear.
+        $familyMember = Student::active()
             // with() loads the related rows too. "status:id,status" means: from user_status, take only id and status.
             ->with(['status:id,status', 'role:id,role'])
             ->orderBy('name')
@@ -26,7 +27,7 @@ class StudentController extends Controller
             ->get(['id', 'name', 'email', 'phonenumber', 'usr_status_id', 'usr_role_id']);
 
         // Pick the React page 'students/index' (resources/js/pages/students/index.tsx) and hand it the data.
-        return Inertia::render('parent/students', compact('students'));
+        return Inertia::render('parent/familyMembers', compact('familyMember'));
     }
 
     /**
@@ -59,7 +60,8 @@ class StudentController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
     
-        $student = Student::onlyStudents()->active()->findOrFail($id);
+        // Any active member can be edited, including a parent.
+        $student = Student::active()->findOrFail($id);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -83,7 +85,8 @@ class StudentController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $student = Student::onlyStudents()->active()->findOrFail($id);
+        // Any active member can be archived, including a parent.
+        $student = Student::active()->findOrFail($id);
 
         $student->update([
             'usr_status_id' => $this->idOf('user_status', 'status', 'removed'),
@@ -93,6 +96,38 @@ class StudentController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Student removed.']);
 
         return to_route('students.index');
+    }
+
+    /**
+     * ARCHIVE: show all student have removed status
+     */
+
+    public function showArchives(): Response
+    {
+        // Show every removed member, not only removed students.
+        $familyMember = Student::removed()
+            ->with(['status:id,status', 'role:id,role'])
+            ->orderBy('removed_at')
+            ->get(['id', 'name', 'email', 'phonenumber', 'usr_status_id', 'removed_at']);
+
+        return Inertia::render('parent/archives', compact('familyMember'));
+    }
+
+        /**
+     * ARCHIVE: recover the student that have removed status
+     */
+
+    public function restore(int $id) : RedirectResponse
+    {
+    // Any removed member can be restored, including a parent.
+    $familyMember = Student::removed()->findOrFail($id);
+    $familyMember->update([
+            'usr_status_id' => $this->idOf('user_status', 'status', 'active'),
+            'removed_at' => null,
+        ]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Student recovered.']);
+
+        return to_route('students.archive');
     }
 
     /**

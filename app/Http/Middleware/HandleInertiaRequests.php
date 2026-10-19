@@ -45,6 +45,8 @@ class HandleInertiaRequests extends Middleware
                 'welcome' => fn () => $request->session()->get('welcome'),
                 'google_error' => fn () => $request->session()->get('google_error'),
                 'add_student_error' => fn () => $request->session()->get('add_student_error'),
+                'add_member_error' => fn () => $request->session()->get('add_member_error'),
+                'add_member_success' => fn () => $request->session()->get('add_member_success'),
             ],
             // The email waiting for the "create account" confirmation, or null when there is none.
             // Read from the session so the dialog is still there after a page refresh.
@@ -54,6 +56,20 @@ class HandleInertiaRequests extends Middleware
                 // Show the dialog only while the held details have not expired.
                 if ($pending !== null && $pending['expires_at'] > now()->timestamp) {
                     return $pending['email'];
+                }
+
+                return null;
+            },
+            // The Google email and role waiting for the add-member confirmation.
+            'pendingMember' => function () use ($request) {
+                $pending = $request->session()->get('pending_member');
+
+                // Only share it while the 10-minute window is still valid.
+                if ($pending !== null && $pending['expires_at'] > now()->timestamp) {
+                    return [
+                        'email' => $pending['email'],
+                        'role' => $pending['role'],
+                    ];
                 }
 
                 return null;
