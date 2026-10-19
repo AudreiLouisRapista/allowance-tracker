@@ -37,7 +37,26 @@ class GoogleAuthController extends Controller
             );
         }
 
-        $tenantConnection->switchToFamily($directoryEntry->family_id);
+        return $this->signInToFamily(
+            $request,
+            (int) $directoryEntry->family_id,
+            $email,
+            $jwtService,
+            $tenantConnection,
+        );
+    }
+
+    /**
+     * Turn a verified email into a signed-in session for its family.
+     */
+    private function signInToFamily(
+        Request $request,
+        int $familyId,
+        string $email,
+        JwtService $jwtService,
+        TenantConnection $tenantConnection,
+    ): RedirectResponse {
+        $tenantConnection->switchToFamily($familyId);
 
         $user = DB::connection(TenantConnection::CONNECTION)
             ->table('users')
@@ -67,7 +86,7 @@ class GoogleAuthController extends Controller
 
         $request->session()->forget('pending_registration');
 
-        $token = $jwtService->createToken($user->id, $directoryEntry->family_id, $user->role);
+        $token = $jwtService->createToken($user->id, $familyId, $user->role);
         $cookie = cookie(
             name: config('jwt.cookie_name'),
             value: $token,
@@ -89,6 +108,14 @@ class GoogleAuthController extends Controller
             ->withCookie($cookie);
     }
 
+    public function redirectToGoogleLogin(Request $request): SymfonyRedirectResponse
+    {
+        $request->session()->forget(['google_auth_intent', 'google_signup_origin']);
+        $request->session()->put('google_auth_intent', 'login');
+
+        return Socialite::driver('google')->redirect();
+    }
+
     public function redirectToGoogleSignup(Request $request): SymfonyRedirectResponse
     {
         session()->put('google_auth_intent', 'signup');
@@ -103,8 +130,11 @@ class GoogleAuthController extends Controller
     /**
      * Google sends the user back here after they approve (or cancel).
      */
-    public function handleGoogleCallback(Request $request): RedirectResponse
-    {
+    public function handleGoogleCallback(
+        Request $request,
+        JwtService $jwtService,
+        TenantConnection $tenantConnection
+    ): RedirectResponse {
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable $exception) {
@@ -169,6 +199,33 @@ class GoogleAuthController extends Controller
         $googleId = trim($googleId);
         // Fall back to the part before @ when Google does not return a name.
         $name = $googleUser->getName() ?: Str::before($email, '@');
+
+        if ($intent === 'login') {
+            $directoryEntry = DB::table('users_directory')
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->first();
+
+            if ($directoryEntry === null) {
+                // Unknown email: hold the details and let the login page ask
+                // whether a new family account should be created.
+                $request->session()->put('pending_registration', [
+                    'email' => $email,
+                    'google_id' => $googleId,
+                    'name' => $name,
+                    'expires_at' => now()->addMinutes(10)->timestamp,
+                ]);
+
+                return redirect('/login');
+            }
+
+            return $this->signInToFamily(
+                $request,
+                (int) $directoryEntry->family_id,
+                $email,
+                $jwtService,
+                $tenantConnection,
+            );
+        }
 
         if ($intent === 'add_member') {
             // The family id and role must be valid before anything is stored.

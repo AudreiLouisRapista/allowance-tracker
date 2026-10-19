@@ -34,7 +34,7 @@ class RegistrationController extends Controller
         if (DB::table('users_directory')->where('email', $pending['email'])->exists()) {
             $request->session()->forget('pending_registration');
 
-            return redirect('/auth/google/redirect');
+            return redirect('/auth/google/login');
         }
 
         // 4. Create the family, its database, and the first parent. On failure it cleans up after itself.

@@ -9,6 +9,7 @@ use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/email/login', [GoogleAuthController::class, 'loginWithEmail']);
+Route::get('/auth/google/login', [GoogleAuthController::class, 'redirectToGoogleLogin']);
 Route::get('/auth/google/signup', [GoogleAuthController::class, 'redirectToGoogleSignup']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 

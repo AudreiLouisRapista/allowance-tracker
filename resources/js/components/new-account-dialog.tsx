@@ -50,8 +50,8 @@ export default function NewAccountDialog() {
                 <DialogHeader>
                     <DialogTitle>Create a new account?</DialogTitle>
                     <DialogDescription>
-                        {pendingRegistration} is new to the Allowance Tracker. Do you want
-                        to create a new account with this Google account?
+                        {pendingRegistration} is new to Allowee. Do you want to
+                        create a new family account with this Google account?
                     </DialogDescription>
                 </DialogHeader>
 
