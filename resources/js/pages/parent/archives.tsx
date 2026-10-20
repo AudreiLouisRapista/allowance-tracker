@@ -1,9 +1,8 @@
-import { Head, router, usePage, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
-
-type ArchoveStudent = {
+type ArchivedFamilyMember = {
     id: number;
     name: string;
     email: string;
@@ -12,26 +11,12 @@ type ArchoveStudent = {
     removed_at : string | null
 };
 
-type PageProps = {
-    flash: {
-        add_student_error?: string | null;
-    };
-};
-
-export default function Students({ familyMember }: { familyMember: ArchoveStudent[] }) {
-    const { flash } = usePage<PageProps>().props;
-    // The student being edited. null means the edit dialog is closed.
-
-    // RECOVER: ask first, then send RECOVER /students/{id}.
-    const handleRecover = (student: ArchoveStudent) => {
-        if (confirm(`Restore ${student.name}?`)) {
-            router.patch(`/students/${student.id}/restore`,{}, { preserveScroll: true });
+export default function FamilyMemberArchives({ familyMembers }: { familyMembers: ArchivedFamilyMember[] }) {
+    const handleRecover = (member: ArchivedFamilyMember) => {
+        if (confirm(`Restore ${member.name}?`)) {
+            router.patch(`/family-members/${member.id}/restore`, {}, { preserveScroll: true });
         }
     };
-
-    const [addDialogOpen, setAddDialogOpen] = useState(Boolean(flash.add_student_error));
-
-
 
     return (
         <>
@@ -41,15 +26,17 @@ export default function Students({ familyMember }: { familyMember: ArchoveStuden
                     <h1 className="text-xl font-semibold">Archive</h1>
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                         <Button
-                            className="w-fit transition-all hover:-translate-y-0.5 hover:shadow-md" variant="secondary"
+                            className="w-fit transition-all hover:-translate-y-0.5 hover:shadow-md" variant="outline"
                             size="sm"
                             >
-                            <Link href="/students">Back</Link>
+                            <Link href="/family-members">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Link>
                         </Button>
                     </div>
                 </div>
                 
-                {/* READ: one table row for each student sent by the controller. */}
+                {/* One row for each archived family member. */}
                 <table className="w-full text-left text-sm">
                     <thead>
                         <tr className="border-b">
@@ -62,25 +49,25 @@ export default function Students({ familyMember }: { familyMember: ArchoveStuden
                         </tr>
                     </thead>
                     <tbody>
-                        {familyMember.map((student) => (
-                            <tr key={student.id} className="border-b">
-                                <td className="py-2">{student.name}</td>
-                                <td>{student.email}</td>
-                                <td>{student.phonenumber ? `+63${student.phonenumber}` : '-'}</td>
-                                <td className="font-bold text-red-500">{student.status.status}</td>
-                                <td className="font-bold">{student.removed_at ? new Date (student.removed_at).toLocaleDateString() : '-'}</td>
+                        {familyMembers.map((member) => (
+                            <tr key={member.id} className="border-b">
+                                <td className="py-2">{member.name}</td>
+                                <td>{member.email}</td>
+                                <td>{member.phonenumber ? `+63${member.phonenumber}` : '-'}</td>
+                                <td className="font-bold text-red-500">{member.status.status}</td>
+                                <td className="font-bold">{member.removed_at ? new Date(member.removed_at).toLocaleDateString() : '-'}</td>
                                 <td  className='text-center'>
                                     {/* UPDATE: remember which student to edit, which opens the dialog below. */}
                                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                                        <Button size="sm" variant="default" onClick={() => handleRecover(student)}>Recover</Button>
+                                        <Button size="sm" variant="default" onClick={() => handleRecover(member)}>Recover</Button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
                         {/* Message for an empty list */}
-                        {familyMember.length === 0 && (
+                        {familyMembers.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-8 text-center text-muted-foreground">No students yet.</td>
+                                <td colSpan={6} className="py-8 text-center text-muted-foreground">No archived family members.</td>
                             </tr>
                         )}
                     </tbody>
@@ -92,4 +79,4 @@ export default function Students({ familyMember }: { familyMember: ArchoveStuden
 }
 
 // Breadcrumb shown above the page.
-Students.layout = { breadcrumbs: [{ title: 'Students', href: '/students' }] };
+FamilyMemberArchives.layout = { breadcrumbs: [{ title: 'Archives', href: '/family-members/archives' }] };

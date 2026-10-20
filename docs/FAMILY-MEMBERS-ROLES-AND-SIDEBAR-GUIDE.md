@@ -203,7 +203,7 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(...)
 - `jwt.auth` proves the user is signed in.
 - `role:parent` proves the user is a parent.
 
-So even if a student typed `/students` or `/family-members/add` manually, they would be stopped before reaching the controller.
+So even if a student typed `/family-members` or `/family-members/add` manually, they would be stopped before reaching the controller.
 
 Routes added:
 
@@ -225,14 +225,14 @@ It shares:
 
 `pendingMember` reads the session, so the confirmation dialog survives a page refresh. It only returns data while the 10-minute window is still valid.
 
-### `app/Http/Controllers/StudentController.php`
+### `app/Http/Controllers/FamilyMemberController.php`
 
 **Job:** the family list, edits, archives, and restores.
 
 The important change is that the page now lists **every active member**, not only students:
 
 ```php
-$familyMember = Student::active()
+$familyMembers = FamilyMember::active()
     ->with(['status:id,status', 'role:id,role'])
     ->orderBy('name')
     ->get(['id', 'name', 'email', 'phonenumber', 'usr_status_id', 'usr_role_id']);
@@ -242,7 +242,7 @@ Why include `usr_status_id` and `usr_role_id` in `get()`? Because those are the 
 
 The table now also shows a **Role** column, so a parent can see who is a parent and who is a student.
 
-### `resources/js/pages/parent/familyMembers.tsx`
+### `resources/js/pages/parent/family-member.tsx`
 
 **Job:** the screen the parent interacts with.
 
@@ -264,8 +264,8 @@ This file now defines two separate menus:
 ```tsx
 const parentNavItems: NavItem[] = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-    { title: 'Family members', href: '/students', icon: Users },
-    { title: 'Archives', href: '/archives', icon: Archive },
+    { title: 'Family members', href: '/family-members', icon: Users },
+    { title: 'Archives', href: '/family-members/archives', icon: Archive },
 ];
 
 const studentNavItems: NavItem[] = [
@@ -353,7 +353,7 @@ Before:
 
 ```tsx
 <Button>
-    <Link href="/archives">Show Archives</Link>
+    <Link href="/family-members/archives">Show Archives</Link>
 </Button>
 ```
 
@@ -361,7 +361,7 @@ This renders a link **inside** a button, which is invalid HTML. Now:
 
 ```tsx
 <Button asChild>
-    <Link href="/archives">Show Archives</Link>
+    <Link href="/family-members/archives">Show Archives</Link>
 </Button>
 ```
 
@@ -388,8 +388,8 @@ Every flash message now auto-dismisses after **5 seconds**.
 | Item | URL | Why |
 | --- | --- | --- |
 | Dashboard | `/dashboard` | Parent overview. |
-| Family members | `/students` | Add, edit, and archive members. |
-| Archives | `/archives` | Restore removed members. |
+| Family members | `/family-members` | Add, edit, and archive members. |
+| Archives | `/family-members/archives` | Restore removed members. |
 
 ### Student menu
 
@@ -430,7 +430,7 @@ The first is security; the second is usability.
 1. Repeat the flow but choose **Student**.
 2. Confirm the new student appears with the role `student`.
 3. Sign in as that student.
-4. Confirm the sidebar shows only **Dashboard** and that `/students` returns 403.
+4. Confirm the sidebar shows only **Dashboard** and that `/family-members` returns 403.
 
 ### Error cases
 

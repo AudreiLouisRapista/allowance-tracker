@@ -4,10 +4,22 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 
-test('duplicate Google signup from students returns to the add student dialog', function () {
+test('Google signup records the family member page as its origin', function () {
+    $provider = Mockery::mock();
+    $provider->shouldReceive('redirect')->once()->andReturn(redirect('/google'));
+
+    Socialite::shouldReceive('driver')->once()->with('google')->andReturn($provider);
+
+    $this->get('/auth/google/signup?source=family-member')
+        ->assertRedirect('/google')
+        ->assertSessionHas('google_signup_origin', 'family-member');
+});
+
+test('duplicate Google signup from the family member page returns to that page', function () {
     $googleUser = Mockery::mock();
     $googleUser->shouldReceive('getEmail')->once()->andReturn('registered@example.com');
     $googleUser->shouldReceive('getId')->once()->andReturn('google-user-id');
+    $googleUser->shouldReceive('getName')->once()->andReturn(null);
     $googleUser->user = ['email_verified' => true];
 
     $provider = Mockery::mock();
@@ -26,9 +38,9 @@ test('duplicate Google signup from students returns to the add student dialog', 
 
     $this->withSession([
         'google_auth_intent' => 'signup',
-        'google_signup_origin' => 'students',
+        'google_signup_origin' => 'family-member',
     ])
         ->get('/auth/google/callback')
-        ->assertRedirect(route('students.index'))
-        ->assertSessionHas('add_student_error', 'This Google email is already registered. Use a different account to add a student.');
+        ->assertRedirect(route('family-members.index'))
+        ->assertSessionHas('add_member_error', 'This Google email is already registered. Use a different account to add a family member.');
 });

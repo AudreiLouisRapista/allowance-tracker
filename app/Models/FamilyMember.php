@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class Student extends Model
+class FamilyMember extends Model
 {
-    // Each student belongs to ONE status row. usr_status_id (here) points to user_status.id (there).
+    // Each family member belongs to one status row.
     public function status(): BelongsTo
     {
         return $this->belongsTo(UserStatus::class, 'usr_status_id');
     }
 
-    // Each student belongs to ONE role row. usr_role_id points to user_role.id.
+    // Each family member belongs to one role row.
     public function role(): BelongsTo
     {
         return $this->belongsTo(UserRole::class, 'usr_role_id');
@@ -25,7 +25,7 @@ class Student extends Model
     // Use the "tenant" connection, which jwt.auth points at the signed-in family's database.
     protected $connection = TenantConnection::CONNECTION;
 
-    // The table that holds the rows. Students are rows of "users" whose role is "student".
+    // Family members are users with either the parent or student role.
     protected $table = 'users';
 
     // The only columns that create() and update() may fill. Anything else is ignored.
@@ -35,7 +35,7 @@ class Student extends Model
 
     protected $casts = ['removed_at' => 'datetime'];
 
-    // Reusable filter: only users whose role is "student". Used as Student::onlyStudents().
+    // Reusable filter for places that specifically need users with the student role.
     public function scopeOnlyStudents(Builder $query): Builder
     {
         return $query->whereIn(
@@ -44,7 +44,7 @@ class Student extends Model
         );
     }
 
-    // Reusable filter: only users whose status is "active". Used as Student::active().
+    // Reusable filter for active family members.
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereIn(
@@ -53,7 +53,7 @@ class Student extends Model
         );
     }
 
-    // Reusable filter: only users whose status is "active". Used as Student::active().
+    // Reusable filter for removed family members.
     public function scopeRemoved(Builder $query): Builder
     {
         return $query->whereIn(

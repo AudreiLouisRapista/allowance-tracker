@@ -2,6 +2,7 @@ import { Form, Head, router, usePage, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Pencil, Archive  } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -21,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { useAutoDismiss } from '@/hooks/use-auto-dismiss';
 
-type Student = {
+type FamilyMember = {
     id: number;
     name: string;
     email: string;
@@ -39,12 +40,12 @@ type PageProps = {
     pendingMember?: { email: string; role: 'parent' | 'student' } | null;
 };
 
-export default function FamilyMembers({ familyMember }: { familyMember: Student[] }) {
+export default function FamilyMembers({ familyMembers }: { familyMembers: FamilyMember[] }) {
     const { flash, pendingMember } = usePage<PageProps>().props;
     const memberError = useAutoDismiss(flash.add_member_error);
     const memberSuccess = useAutoDismiss(flash.add_member_success);
-    // The student being edited. null means the edit dialog is closed.
-    const [editing, setEditing] = useState<Student | null>(null);
+    // The selected member, or null while the edit dialog is closed.
+    const [editing, setEditing] = useState<FamilyMember | null>(null);
 
     // The role selected in the Add Family member dialog.
     const [role, setRole] = useState<'parent' | 'student'>('student');
@@ -52,10 +53,10 @@ export default function FamilyMembers({ familyMember }: { familyMember: Student[
     // True while POST /family-members/register is running.
     const [addingMember, setAddingMember] = useState(false);
 
-    // REMOVE: ask first, then send DELETE /students/{id}.
-    const handleRemove = (student: Student) => {
-        if (confirm(`Remove ${student.name}?`)) {
-            router.delete(`/students/${student.id}`, { preserveScroll: true });
+    // Ask first, then archive the selected family member.
+    const handleRemove = (member: FamilyMember) => {
+        if (confirm(`Archive ${member.name}?`)) {
+            router.delete(`/family-members/${member.id}`, { preserveScroll: true });
         }
     };
 
@@ -83,10 +84,10 @@ export default function FamilyMembers({ familyMember }: { familyMember: Student[
                         <Button
                             asChild
                             className="w-full transition-all hover:-translate-y-0.5 hover:shadow-md sm:w-auto"
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
                         >
-                            <Link href="/archives">Show Archives</Link>
+                            <Link href="/family-members/archives">Show Archives</Link>
                         </Button>
                     </div>
                 </div>
@@ -110,42 +111,42 @@ export default function FamilyMembers({ familyMember }: { familyMember: Student[
                             <th>Phone</th>
                             <th>Statu</th>
                             <th>Role</th>
-                            <th className='text-right'>Action</th>
+                            <th className='text-center'>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {familyMember.map((student) => (
-                            <tr key={student.id} className="border-b transition-colors hover:bg-muted/50">
-                                <td className="py-2">{student.name}</td>
-                                <td>{student.email}</td>
-                                <td>{student.phonenumber ? `+63${student.phonenumber}` : '-'}</td>
-                                <td className="font-bold text-green-500">{student.status.status}</td>
-                                <td className="font-bold">{student.role.role}</td>
-                                <td  className='text-right'>
+                        {familyMembers.map((member) => (
+                            <tr key={member.id} className="border-b transition-colors hover:bg-muted/50">
+                                <td className="py-2">{member.name}</td>
+                                <td>{member.email}</td>
+                                <td>{member.phonenumber ? `+63${member.phonenumber}` : '-'}</td>
+                                <td className="font-bold text-green-500">{member.status.status}</td>
+                                <td className="font-bold">{member.role.role}</td>
+                                <td  className='text-center'>
                                     {/* UPDATE: remember which student to edit, which opens the dialog below. */}
-                                    <div className="flex flex-wrap justify-end gap-2">
+                                    <div className="flex flex-wrap justify-center gap-2">
                                         <Button
                                             className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => setEditing(student)}
+                                            onClick={() => setEditing(member)}
                                         >
-                                            Edit
+                                            <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
                                             size="sm"
                                             variant="destructive"
-                                            onClick={() => handleRemove(student)}
+                                            onClick={() => handleRemove(member)}
                                         >
-                                            Archive
+                                            <Archive className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
                         {/* Message for an empty list */}
-                        {familyMember.length === 0 && (
+                        {familyMembers.length === 0 && (
                             <tr>
                                 <td colSpan={6} className="py-8 text-center text-muted-foreground">No family members yet.</td>
                             </tr>
@@ -158,8 +159,8 @@ export default function FamilyMembers({ familyMember }: { familyMember: Student[
             <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
                 <DialogContent>
                     {editing && (
-                        // key makes the form start fresh for each student. PATCH /students/{id} saves it.
-                        <Form key={editing.id} action={`/students/${editing.id}`} method="patch" onSuccess={() => setEditing(null)} className="space-y-4">
+                        // Key makes the form start fresh for each member.
+                        <Form key={editing.id} action={`/family-members/${editing.id}`} method="patch" onSuccess={() => setEditing(null)} className="space-y-4">
                             {({ processing, errors }) => (
                                 <>
                                     <DialogHeader>
@@ -316,4 +317,4 @@ export default function FamilyMembers({ familyMember }: { familyMember: Student[
 }
 
 // Breadcrumb shown above the page.
-FamilyMembers.layout = { breadcrumbs: [{ title: 'Family members', href: '/students' }] };
+FamilyMembers.layout = { breadcrumbs: [{ title: 'Family members', href: '/family-members' }] };

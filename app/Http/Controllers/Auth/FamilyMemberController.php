@@ -46,7 +46,7 @@ class FamilyMemberController extends Controller
 
         // There must be held Google details.
         if ($pending === null) {
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->with('add_member_error', 'Your sign-up was not found. Please try again.');
         }
 
@@ -64,7 +64,7 @@ class FamilyMemberController extends Controller
         } catch (ValidationException $exception) {
             $request->session()->forget('pending_member');
 
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->with('add_member_error', 'Your sign-up details are invalid. Please try again.');
         }
 
@@ -72,7 +72,7 @@ class FamilyMemberController extends Controller
         if ($data['expires_at'] < now()->timestamp) {
             $request->session()->forget('pending_member');
 
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->with('add_member_error', 'Your Google sign-in expired. Please try again.');
         }
 
@@ -80,7 +80,7 @@ class FamilyMemberController extends Controller
         if ((int) $request->attributes->get('auth_family_id') !== (int) $data['family_id']) {
             $request->session()->forget('pending_member');
 
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->with('add_member_error', 'This sign-up does not belong to your family.');
         }
 
@@ -95,13 +95,13 @@ class FamilyMemberController extends Controller
             );
         } catch (ValidationException $exception) {
             // Show the real validation message (e.g. email already registered).
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->withErrors($exception->errors())
                 ->with('add_member_error', collect($exception->errors())->flatten()->first());
         } catch (Throwable $exception) {
             report($exception);
 
-            return to_route('students.index')
+            return to_route('family-members.index')
                 ->with('add_member_error', 'We could not add this family member. Please try again.');
         }
 
@@ -109,7 +109,7 @@ class FamilyMemberController extends Controller
 
         $label = $data['role'] === 'parent' ? 'Parent' : 'Student';
 
-        return to_route('students.index')
+        return to_route('family-members.index')
             ->with('add_member_success', "{$label} account added for {$data['name']}.");
     }
 
@@ -117,6 +117,6 @@ class FamilyMemberController extends Controller
     {
         $request->session()->forget('pending_member');
 
-        return to_route('students.index');
+        return to_route('family-members.index');
     }
 }

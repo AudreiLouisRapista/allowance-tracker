@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Auth\FamilyMemberController;
+use App\Http\Controllers\Auth\FamilyMemberController as AuthFamilyMemberController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\StudentController;
+use App\Http\Controllers\FamilyMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/email/login', [GoogleAuthController::class, 'loginWithEmail']);
@@ -28,20 +28,16 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(function () {
 
     // Starts Google OAuth for a new family member. The chosen role and the
     // current family are saved on the server before redirecting to Google.
-    Route::get('family-members/add', [FamilyMemberController::class, 'redirectToGoogle'])->name('family-members.add');
+    Route::get('family-members/add', [AuthFamilyMemberController::class, 'redirectToGoogle'])->name('family-members.add');
+    Route::post('family-members/register', [AuthFamilyMemberController::class, 'store'])->name('family-members.register');
+    Route::post('family-members/register/cancel', [AuthFamilyMemberController::class, 'cancel'])->name('family-members.cancel');
 
-    // Creates the selected role inside the CURRENT family database (no new database).
-    Route::post('family-members/register', [FamilyMemberController::class, 'store'])->name('family-members.register');
-
-    // Cancels the held Google details without creating anything.
-    Route::post('family-members/register/cancel', [FamilyMemberController::class, 'cancel'])->name('family-members.cancel');
-
-    Route::get('students', [StudentController::class, 'index'])->name('students.index');      
-    Route::get('archives', [StudentController::class, 'showArchives'])->name('students.archive');            
-    Route::post('students', [StudentController::class, 'store'])->name('students.store');           
-    Route::patch('students/{id}', [StudentController::class, 'update'])->whereNumber('id')->name('students.update'); 
-    Route::patch('students/{id}/restore', [StudentController::class, 'restore'])->whereNumber('id')->name('students.restore'); 
-    Route::delete('students/{id}', [StudentController::class, 'destroy'])->whereNumber('id')->name('students.destroy');
+    Route::get('family-members/archives', [FamilyMemberController::class, 'showArchives'])->name('family-members.archive');
+    Route::get('family-members', [FamilyMemberController::class, 'index'])->name('family-members.index');
+    Route::post('family-members', [FamilyMemberController::class, 'store'])->name('family-members.store');
+    Route::patch('family-members/{id}', [FamilyMemberController::class, 'update'])->whereNumber('id')->name('family-members.update');
+    Route::patch('family-members/{id}/restore', [FamilyMemberController::class, 'restore'])->whereNumber('id')->name('family-members.restore');
+    Route::delete('family-members/{id}', [FamilyMemberController::class, 'destroy'])->whereNumber('id')->name('family-members.destroy');
 });
 
 Route::middleware(['jwt.auth', 'role:student'])->group(function () {

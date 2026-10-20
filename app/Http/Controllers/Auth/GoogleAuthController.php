@@ -121,7 +121,7 @@ class GoogleAuthController extends Controller
         session()->put('google_auth_intent', 'signup');
         session()->put(
             'google_signup_origin',
-            $request->query('source') === 'students' ? 'students' : 'login'
+            $request->query('source') === 'family-member' ? 'family-member' : 'login'
         );
 
         return Socialite::driver('google')->redirect();
@@ -154,7 +154,7 @@ class GoogleAuthController extends Controller
             ]);
 
             if ($intent === 'add_member') {
-                return to_route('students.index')
+                return to_route('family-members.index')
                     ->with('add_member_error', 'Google sign-in was cancelled or failed. Please try again.');
             }
 
@@ -177,7 +177,7 @@ class GoogleAuthController extends Controller
 
         if (empty($email) || $emailIsVerified === false) {
             return $intent === 'add_member'
-                ? to_route('students.index')->with('add_member_error', 'Your Google email could not be verified.')
+                ? to_route('family-members.index')->with('add_member_error', 'Your Google email could not be verified.')
                 : $this->backToLogin('Your Google email could not be verified.');
         }
 
@@ -186,13 +186,13 @@ class GoogleAuthController extends Controller
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $intent === 'add_member'
-                ? to_route('students.index')->with('add_member_error', 'Your Google email is not valid.')
+                ? to_route('family-members.index')->with('add_member_error', 'Your Google email is not valid.')
                 : $this->backToLogin('Your Google email is not valid.');
         }
 
         if (! is_string($googleId) || trim($googleId) === '') {
             return $intent === 'add_member'
-                ? to_route('students.index')->with('add_member_error', 'The Google account could not be verified.')
+                ? to_route('family-members.index')->with('add_member_error', 'The Google account could not be verified.')
                 : $this->backToLogin('The Google account could not be verified.');
         }
 
@@ -234,13 +234,13 @@ class GoogleAuthController extends Controller
                 || (int) $memberFamilyId < 1
                 || ! in_array($memberRole, ['parent', 'student'], true)
             ) {
-                return to_route('students.index')
+                return to_route('family-members.index')
                     ->with('add_member_error', 'Please start again from the family members page.');
             }
 
             // The email must not already be registered to any family.
             if (DB::table('users_directory')->whereRaw('LOWER(email) = ?', [$email])->exists()) {
-                return to_route('students.index')
+                return to_route('family-members.index')
                     ->with('add_member_error', 'This Google email is already registered.');
             }
 
@@ -256,7 +256,7 @@ class GoogleAuthController extends Controller
                 'expires_at' => now()->addMinutes(10)->timestamp,
             ]);
 
-            return to_route('students.index');
+            return to_route('family-members.index');
         }
 
         if ($intent !== 'signup') {
@@ -268,10 +268,10 @@ class GoogleAuthController extends Controller
             ->first();
 
         if ($directoryEntry !== null) {
-            if ($signupOrigin === 'students') {
+            if ($signupOrigin === 'family-member') {
                 return redirect()
-                    ->route('students.index')
-                    ->with('add_student_error', 'This Google email is already registered. Use a different account to add a student.');
+                    ->route('family-members.index')
+                    ->with('add_member_error', 'This Google email is already registered. Use a different account to add a family member.');
             }
 
             return $this->backToLogin('This Google email is already registered. Please sign in.');

@@ -27,7 +27,7 @@ const parentNavItems: NavItem[] = [
     },
     {
         title: 'Family members',
-        href: '/students',
+        href: '/family-members',
         icon: Users,
     },
 ];
