@@ -120,6 +120,9 @@ class TenantMemberService
                 'email' => $email,
                 'google_id' => $googleId,
                 'is_creator' => 0,
+                // Who added this member. For a student this is the parent
+                // whose link is locked and cannot be removed later.
+                'created_by' => $currentParentId,
             ]);
 
             if ($role === 'student') {
@@ -131,12 +134,13 @@ class TenantMemberService
             }
 
             if ($role === 'parent') {
-                // A new co-parent is linked to every active student in this family.
+                // A new co-parent is linked to every active student that still has room (max 2 parents).
                 $studentIds = $connection->table('users')
                     ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
                     ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
                     ->where('user_role.role', 'student')
                     ->where('user_status.status', 'active')
+                    ->whereRaw('(SELECT COUNT(*) FROM parent_student WHERE parent_student.student_id = users.id) < 2')
                     ->pluck('users.id');
 
                 foreach ($studentIds as $studentId) {
@@ -166,6 +170,106 @@ class TenantMemberService
         }
 
         return $memberId;
+    }
+
+    /**
+     * Replace the parents linked to one student inside the current tenant.
+     * The parent stored in users.created_by can never be removed.
+     */
+    public function syncStudentParents(int $familyId, int $studentId, array $parentIds): void
+    {
+        $this->tenantConnection->switchToFamily($familyId);
+
+        $connection = DB::connection(TenantConnection::CONNECTION);
+
+        // The target must be an active student in this tenant.
+        $student = $connection->table('users')
+            ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
+            ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
+            ->where('users.id', $studentId)
+            ->where('user_role.role', 'student')
+            ->where('user_status.status', 'active')
+            ->select('users.id', 'users.created_by')
+            ->first();
+
+        if ($student === null) {
+            throw ValidationException::withMessages([
+                'parent_ids' => 'This student was not found in your family.',
+            ]);
+        }
+
+        // Normalise the ids and drop duplicates before comparing.
+        $parentIds = array_values(array_unique(array_map('intval', $parentIds)));
+
+        if ($parentIds === []) {
+            throw ValidationException::withMessages([
+                'parent_ids' => 'Choose at least one parent.',
+            ]);
+        }
+
+        if (count($parentIds) > 2) {
+            throw ValidationException::withMessages([
+                'parent_ids' => 'A student can have at most 2 linked parents.',
+            ]);
+        }
+
+        // Every selected id must be an active parent in the same tenant.
+        $validParentIds = $connection->table('users')
+            ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
+            ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
+            ->whereIn('users.id', $parentIds)
+            ->where('user_role.role', 'parent')
+            ->where('user_status.status', 'active')
+            ->pluck('users.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (count($validParentIds) !== count($parentIds)) {
+            throw ValidationException::withMessages([
+                'parent_ids' => 'One of the selected parents is not active in your family.',
+            ]);
+        }
+
+        // The creating parent stays linked while their account is active.
+        if ($student->created_by !== null) {
+            $creatorId = (int) $student->created_by;
+
+            $creatorIsActive = $connection->table('users')
+                ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
+                ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
+                ->where('users.id', $creatorId)
+                ->where('user_role.role', 'parent')
+                ->where('user_status.status', 'active')
+                ->exists();
+
+            if ($creatorIsActive && ! in_array($creatorId, $validParentIds, true)) {
+                throw ValidationException::withMessages([
+                    'parent_ids' => 'The parent who created this student must stay linked.',
+                ]);
+            }
+        }
+
+        $connection->transaction(function () use ($connection, $studentId, $validParentIds) {
+            // Remove the links that were unchecked.
+            $connection->table('parent_student')
+                ->where('student_id', $studentId)
+                ->whereNotIn('parent_id', $validParentIds)
+                ->delete();
+
+            // Insert only the pairs that do not exist yet.
+            $existingParentIds = $connection->table('parent_student')
+                ->where('student_id', $studentId)
+                ->pluck('parent_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            foreach (array_diff($validParentIds, $existingParentIds) as $parentId) {
+                $connection->table('parent_student')->insert([
+                    'parent_id' => $parentId,
+                    'student_id' => $studentId,
+                ]);
+            }
+        });
     }
 
     // Confirms the id is an active parent in this tenant.

@@ -22,11 +22,18 @@ class FamilyMemberController extends Controller
         ]);
 
         // The middleware should provide these, but guard anyway.
+        $authUser = $request->attributes->get('auth_user');
+
         if (
-            $request->attributes->get('auth_user') === null
+            $authUser === null
             || $request->attributes->get('auth_family_id') === null
         ) {
             abort(403, 'You do not have access to this page.');
+        }
+
+        // Only the family creator may invite another parent.
+        if ($validated['role'] === 'parent' && (int) ($authUser->is_creator ?? 0) !== 1) {
+            abort(403, 'Only the main parent can add a parent.');
         }
 
         $request->session()->forget('pending_member');
@@ -82,6 +89,16 @@ class FamilyMemberController extends Controller
 
             return to_route('family-members.index')
                 ->with('add_member_error', 'This sign-up does not belong to your family.');
+        }
+
+        // Only the family creator may add another parent, even if the request was forged.
+        $authUser = $request->attributes->get('auth_user');
+
+        if ($data['role'] === 'parent' && (int) ($authUser?->is_creator ?? 0) !== 1) {
+            $request->session()->forget('pending_member');
+
+            return to_route('family-members.index')
+                ->with('add_member_error', 'Only the main parent can add a parent.');
         }
 
         try {

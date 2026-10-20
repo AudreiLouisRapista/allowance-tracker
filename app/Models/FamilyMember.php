@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Services\TenantConnection;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
 class FamilyMember extends Model
@@ -50,6 +50,15 @@ class FamilyMember extends Model
         return $query->whereIn(
             'usr_status_id',
             DB::connection(TenantConnection::CONNECTION)->table('user_status')->where('status', 'active')->select('id')
+        );
+    }
+
+    // Reusable filter for places that specifically need users with the parent role.
+    public function scopeOnlyParents(Builder $query): Builder
+    {
+        return $query->whereIn(
+            'usr_role_id',
+            DB::connection(TenantConnection::CONNECTION)->table('user_role')->where('role', 'parent')->select('id')
         );
     }
 

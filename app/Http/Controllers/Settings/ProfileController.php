@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Services\TenantConnection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Services\TenantConnection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,7 +23,7 @@ class ProfileController extends Controller
         $phoneNumber = DB::connection(TenantConnection::CONNECTION)->table('users')
             ->where('id', $user->id)
             ->value('phonenumber');
-        
+
         return Inertia::render('settings/profile', ['phoneNumber' => $phoneNumber]);
     }
 
@@ -35,10 +36,15 @@ class ProfileController extends Controller
 
         // Check the input. Empty values arrive as null, which "nullable" allows for the phone.
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:150'],        // The column holds at most 150 characters.
-            'phonenumber' => ['nullable', 'digits_between:1,10'], // Digits only, 1 to 10 of them.
+            'name' => ['required', 'string', 'max:150'], // The column holds at most 150 characters.
+            'phonenumber' => [
+                'nullable',
+                'digits:10',
+                Rule::unique('tenant.users', 'phonenumber')->ignore($user->id),
+            ],
         ], [
-            'phonenumber.digits_between' => 'Enter 1 to 10 digits, numbers only. Do not include +63.',
+            'phonenumber.digits' => 'Enter exactly 10 digits, number only. Do not include +63.',
+            'phonenumber.unique' => 'This phone number is already used by another family member.',
         ]);
 
         // Update only these two fields of this user's row. The email is never touched.

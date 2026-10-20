@@ -1,4 +1,4 @@
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, usePage, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -8,10 +8,24 @@ type ArchivedFamilyMember = {
     email: string;
     phonenumber: string | null | undefined;
     status: { id: number; status: string }; // Comes from the status relationship.
+    role: { id: number; role: string } | null; // Comes from the role relationship.
     removed_at : string | null
 };
 
+type PageProps = {
+    auth: {
+        user: {
+            id: number;
+            is_creator: number;
+        };
+    };
+};
+
 export default function FamilyMemberArchives({ familyMembers }: { familyMembers: ArchivedFamilyMember[] }) {
+    const { auth } = usePage<PageProps>().props;
+    // Only the family creator may restore another parent.
+    const isMainParent = Number(auth?.user?.is_creator) === 1;
+
     const handleRecover = (member: ArchivedFamilyMember) => {
         if (confirm(`Restore ${member.name}?`)) {
             router.patch(`/family-members/${member.id}/restore`, {}, { preserveScroll: true });
@@ -57,10 +71,14 @@ export default function FamilyMemberArchives({ familyMembers }: { familyMembers:
                                 <td className="font-bold text-red-500">{member.status.status}</td>
                                 <td className="font-bold">{member.removed_at ? new Date(member.removed_at).toLocaleDateString() : '-'}</td>
                                 <td  className='text-center'>
-                                    {/* UPDATE: remember which student to edit, which opens the dialog below. */}
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                                        <Button size="sm" variant="default" onClick={() => handleRecover(member)}>Recover</Button>
-                                    </div>
+                                    {/* Only the main parent may restore another parent. */}
+                                    {member.role?.role !== 'parent' || isMainParent ? (
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                                            <Button size="sm" variant="default" onClick={() => handleRecover(member)}>Recover</Button>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">Main parent only</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}

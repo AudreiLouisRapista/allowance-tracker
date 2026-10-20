@@ -4,8 +4,8 @@ use App\Http\Controllers\Auth\FamilyMemberController as AuthFamilyMemberControll
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
-use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\FamilyMemberController;
+use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/email/login', [GoogleAuthController::class, 'loginWithEmail']);
@@ -36,6 +36,7 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(function () {
     Route::get('family-members', [FamilyMemberController::class, 'index'])->name('family-members.index');
     Route::post('family-members', [FamilyMemberController::class, 'store'])->name('family-members.store');
     Route::patch('family-members/{id}', [FamilyMemberController::class, 'update'])->whereNumber('id')->name('family-members.update');
+    Route::patch('family-members/{id}/parents', [FamilyMemberController::class, 'syncParents'])->whereNumber('id')->name('family-members.parents.sync');
     Route::patch('family-members/{id}/restore', [FamilyMemberController::class, 'restore'])->whereNumber('id')->name('family-members.restore');
     Route::delete('family-members/{id}', [FamilyMemberController::class, 'destroy'])->whereNumber('id')->name('family-members.destroy');
 });

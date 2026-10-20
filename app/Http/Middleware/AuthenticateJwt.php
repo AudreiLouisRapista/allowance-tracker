@@ -15,8 +15,7 @@ class AuthenticateJwt
     public function __construct(
         private JwtService $jwtService,
         private TenantConnection $tenantConnection
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -47,7 +46,7 @@ class AuthenticateJwt
             ->join('user_status', 'user_status.id', '=', 'users.usr_status_id')
             ->join('user_role', 'user_role.id', '=', 'users.usr_role_id')
             ->where('users.id', (int) $claims['sub'])
-            ->select('users.id', 'users.name', 'users.email', 'user_status.status as status', 'user_role.role as role')
+            ->select('users.id', 'users.name', 'users.email', 'users.is_creator', 'user_status.status as status', 'user_role.role as role')
             ->first();
 
         if ($user === null || $user->status !== 'active') {

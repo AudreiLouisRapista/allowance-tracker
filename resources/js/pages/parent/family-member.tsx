@@ -1,8 +1,11 @@
 import { Form, Head, router, usePage, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Pencil, Archive  } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Pencil, Archive, Users } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -22,16 +25,34 @@ import {
 } from '@/components/ui/select';
 import { useAutoDismiss } from '@/hooks/use-auto-dismiss';
 
+// A student may be linked to at most two parents.
+const MAX_PARENTS = 2;
+
 type FamilyMember = {
     id: number;
     name: string;
     email: string;
     phonenumber: string | null | undefined;
+    is_creator: number;
+    created_by: number | null;
+    linked_parent_ids: number[];
     status: { id: number; status: string }; // Comes from the status relationship.
     role: { id: number; role: string };     // Comes from the role relationship.
 };
 
+type ParentOption = {
+    id: number;
+    name: string;
+    email: string;
+};
+
 type PageProps = {
+    auth: {
+        user: {
+            id: number;
+            is_creator: number;
+        };
+    };
     flash: {
         add_member_error?: string | null;
         add_member_success?: string | null;
@@ -40,8 +61,16 @@ type PageProps = {
     pendingMember?: { email: string; role: 'parent' | 'student' } | null;
 };
 
-export default function FamilyMembers({ familyMembers }: { familyMembers: FamilyMember[] }) {
-    const { flash, pendingMember } = usePage<PageProps>().props;
+export default function FamilyMembers({
+    familyMembers,
+    parents,
+}: {
+    familyMembers: FamilyMember[];
+    parents: ParentOption[];
+}) {
+    const { auth, flash, pendingMember } = usePage<PageProps>().props;
+    // Only the family creator may manage who is linked to a student.
+    const isMainParent = Number(auth?.user?.is_creator) === 1;
     const memberError = useAutoDismiss(flash.add_member_error);
     const memberSuccess = useAutoDismiss(flash.add_member_success);
     // The selected member, or null while the edit dialog is closed.
@@ -53,10 +82,93 @@ export default function FamilyMembers({ familyMembers }: { familyMembers: Family
     // True while POST /family-members/register is running.
     const [addingMember, setAddingMember] = useState(false);
 
+    // The student whose parent links are being edited, or null while the dialog is closed.
+    const [linking, setLinking] = useState<FamilyMember | null>(null);
+
+    // The parent checkboxes currently ticked inside the link dialog.
+    const [selectedParentIds, setSelectedParentIds] = useState<number[]>([]);
+
+    // Validation message from PATCH /family-members/{id}/parents.
+    const [linkError, setLinkError] = useState<string | null>(null);
+
+    // True while the link transaction is running.
+    const [savingLinks, setSavingLinks] = useState(false);
+
+    // The member whose archive request is running, or null when none is.
+    const [archivingId, setArchivingId] = useState<number | null>(null);
+
+    // Any in-flight request locks the action buttons so nothing is sent twice.
+    const isBusy = savingLinks || archivingId !== null;
+
+    // True when no more parents can be ticked in the link dialog.
+    const atParentLimit = selectedParentIds.length >= MAX_PARENTS;
+
+    const openLinkDialog = (member: FamilyMember) => {
+        setLinkError(null);
+
+        // The creating parent must stay ticked, but only if that account is still active.
+        const creatorId = member.created_by;
+        const creatorIsListed = creatorId !== null && parents.some((parent) => parent.id === creatorId);
+        const linked = member.linked_parent_ids ?? [];
+
+        setSelectedParentIds(
+            creatorId !== null && creatorIsListed && !linked.includes(creatorId) ? [...linked, creatorId] : linked,
+        );
+        setLinking(member);
+    };
+
+    const toggleParent = (parentId: number, checked: boolean) => {
+        setSelectedParentIds((current) => {
+            // Keep at most 2 parents linked to a student.
+            if (checked && current.length >= MAX_PARENTS && !current.includes(parentId)) {
+                return current;
+            }
+
+            return checked
+                ? [...current.filter((id) => id !== parentId), parentId]
+                : current.filter((id) => id !== parentId);
+        });
+    };
+
+    const saveLinks = () => {
+        if (linking === null || savingLinks) {
+            return;
+        }
+
+        setLinkError(null);
+
+        router.patch(
+            `/family-members/${linking.id}/parents`,
+            { parent_ids: selectedParentIds },
+            {
+                preserveScroll: true,
+                onStart: () => setSavingLinks(true),
+                onFinish: () => setSavingLinks(false),
+                onSuccess: () => {
+                    setLinking(null);
+                    toast.success('Linked parents updated.');
+                },
+                onError: (errors) => {
+                    setLinkError(errors.parent_ids ?? 'Could not update the linked parents.');
+                },
+            },
+        );
+    };
+
     // Ask first, then archive the selected family member.
     const handleRemove = (member: FamilyMember) => {
+        // Ignore clicks while another request is still running.
+        if (isBusy) {
+            return;
+        }
+
         if (confirm(`Archive ${member.name}?`)) {
-            router.delete(`/family-members/${member.id}`, { preserveScroll: true });
+            setArchivingId(member.id);
+
+            router.delete(`/family-members/${member.id}`, {
+                preserveScroll: true,
+                onFinish: () => setArchivingId(null),
+            });
         }
     };
 
@@ -122,26 +234,56 @@ export default function FamilyMembers({ familyMembers }: { familyMembers: Family
                                 <td>{member.phonenumber ? `+63${member.phonenumber}` : '-'}</td>
                                 <td className="font-bold text-green-500">{member.status.status}</td>
                                 <td className="font-bold">{member.role.role}</td>
-                                <td  className='text-center'>
-                                    {/* UPDATE: remember which student to edit, which opens the dialog below. */}
-                                    <div className="flex flex-wrap justify-center gap-2">
-                                        <Button
-                                            className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => setEditing(member)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => handleRemove(member)}
-                                        >
-                                            <Archive className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                <td className="text-center">
+                                    {/* While this row is being archived, show a skeleton instead of the buttons. */}
+                                    {archivingId === member.id ? (
+                                        <Skeleton className="mx-auto h-9 w-32" />
+                                    ) : (
+                                        <div className="mx-auto grid w-fit grid-cols-3 items-center justify-items-center gap-2">
+                                            {/* LINK: only the main parent can open this, and only for a student. */}
+                                            {member.role.role === 'student' && isMainParent ? (
+                                                <Button
+                                                    className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                                                    size="icon"
+                                                    variant="outline"
+                                                    title="Link parents"
+                                                    disabled={isBusy}
+                                                    onClick={() => openLinkDialog(member)}
+                                                >
+                                                    <Users className="h-4 w-4" />
+                                                </Button>
+                                            ) : (
+                                                // Keeps the pencil and archive buttons aligned on every row.
+                                                <span aria-hidden className="size-9" />
+                                            )}
+                                            <Button
+                                                className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                                                size="icon"
+                                                variant="outline"
+                                                title="Edit"
+                                                disabled={isBusy}
+                                                onClick={() => setEditing(member)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            {/* Only the main parent may remove another parent. */}
+                                            {member.role.role !== 'parent' || isMainParent ? (
+                                                <Button
+                                                    className="transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                                                    size="icon"
+                                                    variant="destructive"
+                                                    title="Archive"
+                                                    disabled={isBusy}
+                                                    onClick={() => handleRemove(member)}
+                                                >
+                                                    <Archive className="h-4 w-4" />
+                                                </Button>
+                                            ) : (
+                                                // Keeps the row aligned when the archive button is hidden.
+                                                <span aria-hidden className="size-9" />
+                                            )}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -183,12 +325,89 @@ export default function FamilyMembers({ familyMembers }: { familyMembers: Family
                                         <InputError message={errors.phonenumber} />
                                     </div>
                                     <DialogFooter>
-                                        <Button type="submit" disabled={processing}>   {processing ? 'Updating...' : 'Update'}</Button>
+                                        <Button type="submit" disabled={processing}>
+                                            {processing ? <Skeleton className="h-4 w-16 bg-primary-foreground/40" /> : 'Update'}
+                                        </Button>
                                     </DialogFooter>
                                 </>
                             )}
                         </Form>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* LINK: choose which parents are responsible for one student. */}
+            <Dialog
+                open={linking !== null}
+                onOpenChange={(open) => {
+                    if (!open && !savingLinks) {
+                        setLinking(null);
+                        setLinkError(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Link parents to {linking?.name}</DialogTitle>
+                        <DialogDescription>
+                            Choose which parents are responsible for this student (up to 2).
+                            The parent who created the student stays linked.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {parents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No active parents in this family yet.</p>
+                    ) : (
+                        <div className="grid gap-2">
+                            {parents.map((parent) => {
+                                const isLocked = linking?.created_by === parent.id;
+
+                                return (
+                                    <label
+                                        key={parent.id}
+                                        className="flex items-center gap-3 rounded-md border p-3"
+                                    >
+                                            <Checkbox
+                                                checked={selectedParentIds.includes(parent.id)}
+                                                disabled={isLocked || savingLinks || (atParentLimit && !selectedParentIds.includes(parent.id))}
+                                                onCheckedChange={(checked) => toggleParent(parent.id, checked === true)}
+                                            />
+                                        <span className="grid">
+                                            <span className="text-sm font-medium">
+                                                {parent.name}{isLocked ? ' (creator)' : ''}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">{parent.email}</span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {linkError && (
+                        <p role="alert" className="text-sm text-destructive">{linkError}</p>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={savingLinks}
+                            onClick={() => {
+                                setLinking(null);
+                                setLinkError(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={savingLinks || selectedParentIds.length === 0}
+                            onClick={saveLinks}
+                        >
+                            {savingLinks ? <Skeleton className="h-4 w-12 bg-primary-foreground/40" /> : 'Save'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -216,7 +435,8 @@ export default function FamilyMembers({ familyMembers }: { familyMembers: Family
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="student">Student</SelectItem>
-                                <SelectItem value="parent">Parent</SelectItem>
+                                {/* Only the main parent may add another parent. */}
+                                {isMainParent && <SelectItem value="parent">Parent</SelectItem>}
                             </SelectContent>
                         </Select>
                     </div>
@@ -306,7 +526,7 @@ export default function FamilyMembers({ familyMembers }: { familyMembers: Family
                                 })
                             }
                         >
-                            {addingMember ? 'Adding...' : 'Add member'}
+                            {addingMember ? <Skeleton className="h-4 w-20 bg-primary-foreground/40" /> : 'Add member'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
