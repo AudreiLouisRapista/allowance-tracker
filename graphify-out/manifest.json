@@ -18,9 +18,9 @@
     "semantic_hash": "9da65916eac719381c3ab04cb3a6320c"
   },
   "app/Http/Controllers/Auth/GoogleAuthController.php": {
-    "mtime": 1792425473.2988443,
-    "seen": 1792427390.528673,
-    "ast_hash": "9875b6659eea31a7474402d945105977",
+    "mtime": 1792462534.7330153,
+    "seen": 1792679508.7563164,
+    "ast_hash": "71d71aa6c42f6c4dbaf843ffebb72a6a",
     "semantic_hash": ""
   },
   "app/Http/Controllers/Auth/LogoutController.php": {
@@ -30,8 +30,8 @@
     "semantic_hash": "382184a4bae96cd29863bc4df7745072"
   },
   "app/Http/Controllers/Auth/RegistrationController.php": {
-    "mtime": 1792425357.1560874,
-    "seen": 1792427390.528673,
+    "mtime": 1792461568.229667,
+    "seen": 1792679508.7563164,
     "ast_hash": "9500539f83ee7829d3f71156a63e463c",
     "semantic_hash": ""
   },
@@ -42,9 +42,9 @@
     "semantic_hash": "25a307335c0719bc9a91b3f7babd186d"
   },
   "app/Http/Controllers/Settings/ProfileController.php": {
-    "mtime": 1792065881.7260363,
-    "seen": 1792427390.528673,
-    "ast_hash": "71502dbcd97c5c6e34e8e9f2fddaf562",
+    "mtime": 1792504165.7325833,
+    "seen": 1792679508.7563164,
+    "ast_hash": "c7accaa8e18d6ea2fbea4f449626c3fe",
     "semantic_hash": ""
   },
   "app/Http/Controllers/Settings/SecurityController.php": {
@@ -54,10 +54,10 @@
     "semantic_hash": "68a7872cd8985a2840c79a11d2ce5b9e"
   },
   "app/Http/Middleware/AuthenticateJwt.php": {
-    "mtime": 1791552098.2774205,
-    "seen": 1792044680.9534004,
-    "ast_hash": "ad53f45917fec294026e879317d058e1",
-    "semantic_hash": "ad53f45917fec294026e879317d058e1"
+    "mtime": 1792488415.2914789,
+    "seen": 1792679508.7563164,
+    "ast_hash": "09766e2b6660ace90a08e214faab05d8",
+    "semantic_hash": ""
   },
   "app/Http/Middleware/HandleAppearance.php": {
     "mtime": 1791530300.7911694,
@@ -66,9 +66,9 @@
     "semantic_hash": "2f2d2c81b158e77427a6ccce5aa17a30"
   },
   "app/Http/Middleware/HandleInertiaRequests.php": {
-    "mtime": 1792421548.7257879,
-    "seen": 1792427390.528673,
-    "ast_hash": "2d2333e4eea81ab40fb71bff27422d5a",
+    "mtime": 1792462534.9455028,
+    "seen": 1792679508.7563164,
+    "ast_hash": "11b789c0a1cd4e5d50c311c2df3fac5e",
     "semantic_hash": ""
   },
   "app/Http/Requests/Settings/PasswordUpdateRequest.php": {
@@ -132,8 +132,8 @@
     "semantic_hash": "e66bb13691f6184c762c196427d8e685"
   },
   "bootstrap/app.php": {
-    "mtime": 1792066084.112844,
-    "seen": 1792427390.528673,
+    "mtime": 1792461568.494817,
+    "seen": 1792679508.7563164,
     "ast_hash": "f5bb1db0712e738d8706585250b2ba40",
     "semantic_hash": ""
   },
@@ -432,9 +432,9 @@
     "semantic_hash": "0d3a837ac67b8969159f68d3d4310faa"
   },
   "resources/js/components/app-sidebar.tsx": {
-    "mtime": 1792423894.732821,
-    "seen": 1792427390.528673,
-    "ast_hash": "0eb8607149ea8f3576c355de2c3c7c19",
+    "mtime": 1792678215.4746325,
+    "seen": 1792679508.7563164,
+    "ast_hash": "267f8ab2b0c66859f0403a8e2320f7fb",
     "semantic_hash": ""
   },
   "resources/js/components/appearance-tabs.tsx": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "resources/js/types/auth.ts": {
-    "mtime": 1792064975.8763225,
-    "seen": 1792427390.528673,
-    "ast_hash": "b03a86a75d9879778befde9a49bfc2a9",
+    "mtime": 1792488329.9945924,
+    "seen": 1792679508.7563164,
+    "ast_hash": "401807946376cb261d52fef44c74d163",
     "semantic_hash": ""
   },
   "resources/js/types/global.d.ts": {
@@ -846,15 +846,15 @@
     "semantic_hash": "3c6ce2e6d16444282b24a9aa63885563"
   },
   "routes/settings.php": {
-    "mtime": 1791740931.896652,
-    "seen": 1792044680.9534004,
+    "mtime": 1792461569.087883,
+    "seen": 1792679508.7563164,
     "ast_hash": "a221b10c46fb8791bdbc6876f37904d4",
     "semantic_hash": "a221b10c46fb8791bdbc6876f37904d4"
   },
   "routes/web.php": {
-    "mtime": 1792425356.753026,
-    "seen": 1792427390.528673,
-    "ast_hash": "5ae29d957785cb3c2e93246e8886d704",
+    "mtime": 1792678214.7349572,
+    "seen": 1792679508.7563164,
+    "ast_hash": "b38dd85309a3264d1834a84a1e5f9dae",
     "semantic_hash": ""
   },
   "tests/Feature/Auth/AuthenticationTest.php": {
@@ -936,27 +936,15 @@
     "semantic_hash": "7ff314829cea816dff6e06c55088e746"
   },
   "app/Http/Controllers/Auth/FamilyMemberController.php": {
-    "mtime": 1792421504.8208387,
-    "seen": 1792427390.528673,
-    "ast_hash": "93d84f9310e1246bc66f6881d932e94b",
-    "semantic_hash": ""
-  },
-  "app/Http/Controllers/StudentController.php": {
-    "mtime": 1792421756.6829073,
-    "seen": 1792427390.528673,
-    "ast_hash": "de1826bed59a64e327a6fa361d5177ed",
+    "mtime": 1792504105.4211743,
+    "seen": 1792679508.7563164,
+    "ast_hash": "353bcaf0d0559d42ffceaad534b45f50",
     "semantic_hash": ""
   },
   "app/Http/Middleware/EnsureRole.php": {
     "mtime": 1792068064.3263204,
     "seen": 1792427390.528673,
     "ast_hash": "a272ab93156c17ac8976ebeee74dd9a4",
-    "semantic_hash": ""
-  },
-  "app/Models/Student.php": {
-    "mtime": 1792372849.238678,
-    "seen": 1792427390.528673,
-    "ast_hash": "fbbec748700b7511f65d5449bf7cad60",
     "semantic_hash": ""
   },
   "app/Models/UserRole.php": {
@@ -972,9 +960,9 @@
     "semantic_hash": ""
   },
   "app/Services/TenantMemberService.php": {
-    "mtime": 1792421730.371672,
-    "seen": 1792427390.528673,
-    "ast_hash": "8d8fafab926484ac97090a3b1caa0ea4",
+    "mtime": 1792506839.4266336,
+    "seen": 1792679508.7563164,
+    "ast_hash": "bab6aa139897ef68cff6ee2c93882f2c",
     "semantic_hash": ""
   },
   "resources/js/components/new-account-dialog.tsx": {
@@ -1002,21 +990,15 @@
     "semantic_hash": ""
   },
   "resources/js/pages/parent/archives.tsx": {
-    "mtime": 1792424268.5521588,
-    "seen": 1792427390.528673,
-    "ast_hash": "02eac10a77dbd14145a0b98c0c3ac304",
+    "mtime": 1792506913.8038092,
+    "seen": 1792679508.7563164,
+    "ast_hash": "e91ea8e5eb34421975f3996c45ee575e",
     "semantic_hash": ""
   },
   "resources/js/pages/parent/dashboard.tsx": {
     "mtime": 1792242561.3170376,
     "seen": 1792427390.528673,
     "ast_hash": "b6ac0ebfa7f33245c3f6bd010b28d855",
-    "semantic_hash": ""
-  },
-  "resources/js/pages/parent/familyMembers.tsx": {
-    "mtime": 1792424647.8112116,
-    "seen": 1792427390.528673,
-    "ast_hash": "db4649199dbc917b690dc842e823f239",
     "semantic_hash": ""
   },
   "resources/js/pages/student/dashboard.tsx": {
@@ -1026,9 +1008,9 @@
     "semantic_hash": ""
   },
   "tests/Feature/Auth/GoogleSignupTest.php": {
-    "mtime": 1792323551.462481,
-    "seen": 1792427390.528673,
-    "ast_hash": "4990bdd0553ad8b5a8d27b5892fc9a53",
+    "mtime": 1792462588.662943,
+    "seen": 1792679508.7563164,
+    "ast_hash": "04fe1cca06bf93c38d44c5c3530e191c",
     "semantic_hash": ""
   },
   ".github/dependabot.yml": {
@@ -1044,9 +1026,9 @@
     "semantic_hash": ""
   },
   "docs/FAMILY-MEMBERS-ROLES-AND-SIDEBAR-GUIDE.md": {
-    "mtime": 1792424696.1278827,
-    "seen": 1792427390.528673,
-    "ast_hash": "ae28f0e47e968f2bef5e4c628d7e0bcf",
+    "mtime": 1792462626.5779607,
+    "seen": 1792679508.7563164,
+    "ast_hash": "62bfec0586990e45193ecc81c97c47f4",
     "semantic_hash": ""
   },
   "docs/LOGIN-REGISTRATION-CHANGE-GUIDE.md": {
@@ -1077,6 +1059,78 @@
     "mtime": 1791530300.8488913,
     "seen": 1792427390.528673,
     "ast_hash": "6d65603fc671e2ab354f3ff070494594",
+    "semantic_hash": ""
+  },
+  "app/Console/Commands/MigrateTenants.php": {
+    "mtime": 1792506565.2350974,
+    "seen": 1792679508.7563164,
+    "ast_hash": "2a874ffdccdfe94454c66c01e4b49240",
+    "semantic_hash": ""
+  },
+  "app/Http/Controllers/AllowancePlanController.php": {
+    "mtime": 1792678492.006882,
+    "seen": 1792679508.7563164,
+    "ast_hash": "72ec93db490a5aff7585022ba922e6fe",
+    "semantic_hash": ""
+  },
+  "app/Http/Controllers/FamilyMemberController.php": {
+    "mtime": 1792506914.141961,
+    "seen": 1792679508.7563164,
+    "ast_hash": "d622c43a1d05a412c95d957b1b5a98af",
+    "semantic_hash": ""
+  },
+  "app/Models/AllowancePayout.php": {
+    "mtime": 1792678179.8694117,
+    "seen": 1792679508.7563164,
+    "ast_hash": "55b4c470dd7a954efaecb13fd01e6930",
+    "semantic_hash": ""
+  },
+  "app/Models/AllowancePlan.php": {
+    "mtime": 1792678178.567805,
+    "seen": 1792679508.7563164,
+    "ast_hash": "00d812dae53ae0720aaec4644cbf8e6a",
+    "semantic_hash": ""
+  },
+  "app/Models/AllowancePlanStatus.php": {
+    "mtime": 1792678178.8651106,
+    "seen": 1792679508.7563164,
+    "ast_hash": "7692f2b74186e98cce0df557d05f8582",
+    "semantic_hash": ""
+  },
+  "app/Models/FamilyMember.php": {
+    "mtime": 1792488415.3298016,
+    "seen": 1792679508.7563164,
+    "ast_hash": "694afc3ded352d9cba636e8920ac26e5",
+    "semantic_hash": ""
+  },
+  "app/Services/AllowancePlanService.php": {
+    "mtime": 1792678192.2741356,
+    "seen": 1792679508.7563164,
+    "ast_hash": "95b3db7bbdce1edfcbf434b15ae20aca",
+    "semantic_hash": ""
+  },
+  "database/migrations/tenants/2026_10_20_000000_add_created_by_to_users_table.php": {
+    "mtime": 1792488284.3852406,
+    "seen": 1792679508.7563164,
+    "ast_hash": "df0b56bf6aa558eb0fc3f16be3a00d7b",
+    "semantic_hash": ""
+  },
+  "resources/js/pages/parent/allowance-plans.tsx": {
+    "mtime": 1792678479.481321,
+    "seen": 1792679508.7563164,
+    "ast_hash": "515d2ebf5e936ec7d4da90e3822f6e82",
+    "semantic_hash": ""
+  },
+  "resources/js/pages/parent/family-member.tsx": {
+    "mtime": 1792506852.0656266,
+    "seen": 1792679508.7563164,
+    "ast_hash": "78c86687a6ad9e4b2aabcecd8a3692aa",
+    "semantic_hash": ""
+  },
+  "docs/SECURITY-REVIEW-2026-10-22.md": {
+    "mtime": 1792679391.2726932,
+    "seen": 1792679508.7563164,
+    "ast_hash": "7c969b6f977aa8d6f9ce0a6cc7e43d8b",
     "semantic_hash": ""
   }
 }

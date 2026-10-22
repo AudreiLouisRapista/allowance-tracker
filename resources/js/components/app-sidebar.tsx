@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, LayoutGrid, Users } from 'lucide-react';
+import { Archive, LayoutGrid, Users, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -29,6 +29,11 @@ const parentNavItems: NavItem[] = [
         title: 'Family members',
         href: '/family-members',
         icon: Users,
+    },
+    {
+        title: 'Allowance plans',
+        href: '/allowance-plans',
+        icon: Wallet,
     },
 ];
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AllowancePlanController;
 use App\Http\Controllers\Auth\FamilyMemberController as AuthFamilyMemberController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -39,6 +40,11 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(function () {
     Route::patch('family-members/{id}/parents', [FamilyMemberController::class, 'syncParents'])->whereNumber('id')->name('family-members.parents.sync');
     Route::patch('family-members/{id}/restore', [FamilyMemberController::class, 'restore'])->whereNumber('id')->name('family-members.restore');
     Route::delete('family-members/{id}', [FamilyMemberController::class, 'destroy'])->whereNumber('id')->name('family-members.destroy');
+
+    Route::get('allowance-plans', [AllowancePlanController::class, 'index'])->name('allowance-plans.index');
+    Route::post('allowance-plans', [AllowancePlanController::class, 'store'])->name('allowance-plans.store');
+    Route::patch('allowance-plans/{id}', [AllowancePlanController::class, 'update'])->whereNumber('id')->name('allowance-plans.update');
+    Route::patch('allowance-plans/{id}/status', [AllowancePlanController::class, 'setStatus'])->whereNumber('id')->name('allowance-plans.status');
 });
 
 Route::middleware(['jwt.auth', 'role:student'])->group(function () {
