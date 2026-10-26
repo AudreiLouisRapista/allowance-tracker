@@ -26,7 +26,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 type Frequency = 'weekly' | 'biweekly' | 'monthly';
@@ -328,7 +327,7 @@ export default function AllowancePlans({
                                                 onClick={() => toggleStatus(plan)}
                                             >
                                                 {busyId === plan.id ? (
-                                                    <Skeleton className="h-4 w-20 bg-primary-foreground/40" />
+                                                    'Saving...'
                                                 ) : isActive ? (
                                                     <>
                                                         <Pause className="size-4" />
@@ -490,11 +489,7 @@ export default function AllowancePlans({
                                             type="submit"
                                             disabled={processing || eligibleStudents.length === 0}
                                         >
-                                            {processing ? (
-                                                <Skeleton className="h-4 w-24 bg-primary-foreground/40" />
-                                            ) : (
-                                                'Create plan'
-                                            )}
+                                            {processing ? 'Saving...' : 'Create plan'}
                                         </Button>
                                     </DialogFooter>
                                 </>
@@ -592,11 +587,7 @@ export default function AllowancePlans({
                                                 Cancel
                                             </Button>
                                             <Button type="submit" disabled={processing}>
-                                                {processing ? (
-                                                    <Skeleton className="h-4 w-24 bg-primary-foreground/40" />
-                                                ) : (
-                                                    'Save changes'
-                                                )}
+                                                {processing ? 'Saving...' : 'Save changes'}
                                             </Button>
                                         </DialogFooter>
                                     </>

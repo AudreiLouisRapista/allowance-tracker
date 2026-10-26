@@ -326,7 +326,7 @@ export default function FamilyMembers({
                                     </div>
                                     <DialogFooter>
                                         <Button type="submit" disabled={processing}>
-                                            {processing ? <Skeleton className="h-4 w-16 bg-primary-foreground/40" /> : 'Update'}
+                                            {processing ? 'Updating...' : 'Update'}
                                         </Button>
                                     </DialogFooter>
                                 </>
@@ -405,7 +405,7 @@ export default function FamilyMembers({
                             disabled={savingLinks || selectedParentIds.length === 0}
                             onClick={saveLinks}
                         >
-                            {savingLinks ? <Skeleton className="h-4 w-12 bg-primary-foreground/40" /> : 'Save'}
+                            {savingLinks ? 'Saving...' : 'Save'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -526,7 +526,7 @@ export default function FamilyMembers({
                                 })
                             }
                         >
-                            {addingMember ? <Skeleton className="h-4 w-20 bg-primary-foreground/40" /> : 'Add member'}
+                            {addingMember ? 'Adding...' : 'Add member'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

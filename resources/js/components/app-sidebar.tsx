@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, LayoutGrid, Users, Wallet } from 'lucide-react';
+import { Banknote, LayoutGrid, Users, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -34,6 +34,11 @@ const parentNavItems: NavItem[] = [
         title: 'Allowance plans',
         href: '/allowance-plans',
         icon: Wallet,
+    },
+    {
+        title: 'Payouts',
+        href: '/payouts',
+        icon: Banknote,
     },
 ];
 

@@ -39,13 +39,15 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-               'user' => fn () => $request->attributes->get('auth_user'),
+                'user' => fn () => $request->attributes->get('auth_user'),
             ],
             'flash' => [
                 'welcome' => fn () => $request->session()->get('welcome'),
                 'google_error' => fn () => $request->session()->get('google_error'),
                 'add_member_error' => fn () => $request->session()->get('add_member_error'),
                 'add_member_success' => fn () => $request->session()->get('add_member_success'),
+                'payout_error' => fn () => $request->session()->get('payout_error'),
+                'payout_success' => fn () => $request->session()->get('payout_success'),
             ],
             // The email waiting for the "create account" confirmation, or null when there is none.
             // Read from the session so the dialog is still there after a page refresh.

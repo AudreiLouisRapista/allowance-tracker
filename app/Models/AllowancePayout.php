@@ -16,7 +16,16 @@ class AllowancePayout extends Model
     // The table only has created_at, so Eloquent must not look for updated_at.
     public $timestamps = false;
 
-    protected $fillable = ['plan_id', 'student_id', 'amount', 'cycle_date', 'paid_at', 'created_at'];
+    protected $fillable = [
+        'plan_id',
+        'student_id',
+        'amount',
+        'cycle_date',
+        'paid_at',
+        'paymongo_checkout_id',
+        'paymongo_payment_id',
+        'created_at',
+    ];
 
     protected $casts = [
         'amount' => 'decimal:2',
@@ -25,8 +34,17 @@ class AllowancePayout extends Model
         'created_at' => 'datetime',
     ];
 
+    // The allowance plan this payout was made from.
+    /** @return BelongsTo<AllowancePlan, $this> */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(AllowancePlan::class, 'plan_id');
+    }
+
+    // The student who received this payout.
+    /** @return BelongsTo<FamilyMember, $this> */
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(FamilyMember::class, 'student_id');
     }
 }

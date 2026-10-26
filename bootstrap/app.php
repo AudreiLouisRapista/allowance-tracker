@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AuthenticateJwt;
+use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -17,20 +19,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
 
         $middleware->alias([
-            'jwt.auth' => \App\Http\Middleware\AuthenticateJwt::class,
-            'role' => \App\Http\Middleware\EnsureRole::class,
+            'jwt.auth' => AuthenticateJwt::class,
+            'role' => EnsureRole::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // PayMongo authenticates this endpoint with its webhook signature.
+        $middleware->validateCsrfTokens(except: [
+            'paymongo/webhook',
+        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            
+
         ]);
-        
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

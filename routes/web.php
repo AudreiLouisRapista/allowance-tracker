@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\AllowancePayoutController;
 use App\Http\Controllers\AllowancePlanController;
 use App\Http\Controllers\Auth\FamilyMemberController as AuthFamilyMemberController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\FamilyMemberController;
+use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,9 @@ Route::post('/auth/register', [RegistrationController::class, 'store']);
 Route::post('/auth/register/cancel', [RegistrationController::class, 'cancel']);
 
 Route::post('/auth/logout', LogoutController::class);
+
+// PayMongo calls this without a user session; the webhook signature is the guard.
+Route::post('/paymongo/webhook', PayMongoWebhookController::class)->name('paymongo.webhook');
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -45,6 +50,12 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(function () {
     Route::post('allowance-plans', [AllowancePlanController::class, 'store'])->name('allowance-plans.store');
     Route::patch('allowance-plans/{id}', [AllowancePlanController::class, 'update'])->whereNumber('id')->name('allowance-plans.update');
     Route::patch('allowance-plans/{id}/status', [AllowancePlanController::class, 'setStatus'])->whereNumber('id')->name('allowance-plans.status');
+
+    Route::get('payouts', [AllowancePayoutController::class, 'index'])->name('payouts.index');
+    Route::post('payouts', [AllowancePayoutController::class, 'store'])->name('payouts.store');
+    Route::get('payouts/{checkout}/return', [AllowancePayoutController::class, 'returnFromCheckout'])
+        ->whereNumber('checkout')
+        ->name('payouts.return');
 });
 
 Route::middleware(['jwt.auth', 'role:student'])->group(function () {
