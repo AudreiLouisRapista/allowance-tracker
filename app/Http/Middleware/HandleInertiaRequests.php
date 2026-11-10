@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 'add_member_success' => fn () => $request->session()->get('add_member_success'),
                 'payout_error' => fn () => $request->session()->get('payout_error'),
                 'payout_success' => fn () => $request->session()->get('payout_success'),
+                'purchase_request_error' => fn () => $request->session()->get('purchase_request_error'),
+                'purchase_request_success' => fn () => $request->session()->get('purchase_request_success'),
             ],
             // The email waiting for the "create account" confirmation, or null when there is none.
             // Read from the session so the dialog is still there after a page refresh.

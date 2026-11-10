@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Banknote, LayoutGrid, Users, Wallet } from 'lucide-react';
+import { Banknote, LayoutGrid, ShoppingBag, Users, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -40,6 +40,11 @@ const parentNavItems: NavItem[] = [
         href: '/payouts',
         icon: Banknote,
     },
+    {
+        title: 'Purchase requests',
+        href: '/purchase-requests',
+        icon: ShoppingBag,
+    },
 ];
 
 // Students only see their own area.
@@ -48,6 +53,11 @@ const studentNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/student/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Purchase requests',
+        href: '/student/purchase-requests',
+        icon: ShoppingBag,
     },
 ];
 

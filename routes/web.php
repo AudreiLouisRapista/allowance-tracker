@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\FamilyMemberController;
 use App\Http\Controllers\PayMongoWebhookController;
+use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,10 +57,21 @@ Route::middleware(['jwt.auth', 'role:parent'])->group(function () {
     Route::get('payouts/{checkout}/return', [AllowancePayoutController::class, 'returnFromCheckout'])
         ->whereNumber('checkout')
         ->name('payouts.return');
+
+    Route::get('purchase-requests', [PurchaseRequestController::class, 'parentIndex'])
+        ->name('purchase-requests.index');
 });
 
 Route::middleware(['jwt.auth', 'role:student'])->group(function () {
     Route::inertia('student/dashboard', 'student/dashboard')->name('student.dashboard');
+
+    Route::get('student/purchase-requests', [PurchaseRequestController::class, 'studentIndex'])
+        ->name('student.purchase-requests.index');
+    Route::post('student/purchase-requests', [PurchaseRequestController::class, 'store'])
+        ->name('student.purchase-requests.store');
+    Route::patch('student/purchase-requests/{id}/cancel', [PurchaseRequestController::class, 'cancel'])
+        ->whereNumber('id')
+        ->name('student.purchase-requests.cancel');
 });
 
 require __DIR__.'/settings.php';
